@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       id: user._id,
       role: user.role,
       email: user.email,
+      fullname: user.fullName,
     };
 
     const token = jwt.sign(tokenData, process.env.JWT_SECRET!, {
@@ -69,9 +70,6 @@ export async function POST(req: Request) {
     return res;
   } catch (error) {
     console.error("Login Error:", error);
-    return NextResponse.json(
-      { message: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
