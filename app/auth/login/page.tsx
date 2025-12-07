@@ -4,17 +4,25 @@ import { useLogin } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Mail, Lock, Eye, EyeOff, CheckCircle, X } from "lucide-react";
+import AnimatedPlane from "../../components/Animatedplane";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const login = useLogin();
   const client = useQueryClient();
   const router = useRouter();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,6 +31,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setMessage("");
 
     if (!formData.email || !formData.password) {
       setError("All fields are required");
@@ -31,180 +40,185 @@ export default function LoginPage() {
 
     try {
       await login.mutateAsync(formData);
+      setMessage("Login successful! Redirecting to Dashboard...");
       client.invalidateQueries({ queryKey: ["currentUser"] });
-      router.push("/dashboard");
+
+      setTimeout(() => {
+        router.push("/dashboard");
+        window.location.href = "/dashboard";
+      }, 500);
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your credentials.");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left Side - Welcome Section */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-[#1e3a8a] via-[#1e40af] to-[#2563eb] text-white flex flex-col justify-center items-center p-8 lg:p-16">
-        <div className="max-w-md w-full text-center lg:text-left">
-          {/* Logo */}
-          <div className="flex justify-center lg:justify-start mb-8">
-            <div className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
-              <svg
-                className="w-14 h-14 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f172a] to-[#1e293b] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Animated Plane */}
+        <div className="mb-8">
+          <AnimatedPlane />
+        </div>
+
+        {/* Login Card */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-10">
+          {/* Title */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+              Welcome Back
+            </h2>
+            <p className="text-gray-600">Log in to continue your training</p>
           </div>
 
-          {/* Welcome Text */}
-          <h1 className="text-3xl lg:text-4xl font-bold mb-4">Welcome Back</h1>
-          <p className="text-lg text-white/90 mb-8 lg:mb-12">
-            Access your training modules and continue your journey to excellence in the Airforce.
-          </p>
-
-          {/* Features List */}
-          <ul className="space-y-4 text-left">
-            <li className="flex items-start">
-              <span className="w-2 h-2 bg-white rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              <span className="text-white/90">Track your progress</span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-2 h-2 bg-white rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              <span className="text-white/90">Complete quizzes</span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-2 h-2 bg-white rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              <span className="text-white/90">Submit assignments</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Right Side - Login Form */}
-      <div className="lg:w-1/2 bg-white flex items-center justify-center p-8 lg:p-16">
-        <div className="w-full max-w-md">
-          {/* Title */}
-          <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-2">Login</h2>
-          <p className="text-gray-600 mb-8 text-sm lg:text-base">
-            Enter your credentials to access your account
-          </p>
-
-          {/* Error Message */}
+          {/* Status Messages */}
+          {message && (
+            <div className="mb-6 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+              <p className="text-sm">{message}</p>
+            </div>
+          )}
           {error && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              {error}
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center">
+              <X className="h-5 w-5 mr-2 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
             </div>
           )}
 
-          {/* Form */}
+          {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email Address */}
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="email"
-                  id="email"
                   name="email"
+                  id="email"
+                  placeholder="your.email@airforce.mil"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="your.email@airforce.mil"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-800 placeholder-gray-400"
+                  required
+                  className="block text-gray-600 w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="password"
-                  id="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
+                  id="password"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Enter your password"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-800 placeholder-gray-400"
+                  required
+                  className="block w-full text-gray-600 pl-10 pr-12 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Demo Credentials Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-              <p className="font-semibold text-gray-800 mb-2">Demo Credentials:</p>
-              <div className="space-y-1 text-gray-700">
-                <p>
-                  <span className="font-medium">Student:</span> student@airforce.mil / student
-                </p>
-                <p>
-                  <span className="font-medium">Admin:</span> admin@airforce.mil / admin
-                </p>
+            {/* Remember Me */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-600"
+                >
+                  Remember me
+                </label>
               </div>
-              <p className="text-xs text-gray-600 italic mt-2">
-                Note: Use the admin account to manage questions, view analytics, and grade
-                assignments.
-              </p>
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={login.isPending}
-              className="w-full bg-[#1e40af] hover:bg-[#1e3a8a] text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex justify-center items-center py-3 px-4 rounded-lg text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {login.isPending ? "Logging in..." : "Login"}
+              {login.isPending ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
 
-          {/* Signup Link */}
-          <p className="text-center text-sm text-gray-600 mt-6">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-[#1e40af] font-semibold hover:underline">
-              Create one here
-            </Link>
-          </p>
+          {/* Divider */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <p className="text-center text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link
+                href="/auth/signup"
+                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+              >
+                Create one here
+              </Link>
+            </p>
+          </div>
         </div>
+
+        {/* Footer Note */}
+        <p className="text-center text-gray-500 text-sm mt-6">
+          Secure login for Airforce personnel
+        </p>
       </div>
     </div>
   );

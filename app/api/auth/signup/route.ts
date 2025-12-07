@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 export async function POST(req: Request) {
   try {
     await connectDB();
-    const { fullName, email, password, group } = await req.json();
+    const { fullName, email, password } = await req.json();
 
     // Validate
     if (!fullName || !email || !password) {
@@ -33,7 +33,6 @@ export async function POST(req: Request) {
       fullName,
       email,
       password: hashed,
-      group: group || null
     });
 
     return NextResponse.json(
@@ -43,16 +42,13 @@ export async function POST(req: Request) {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
-          role: user.role
-        }
+          role: user.role,
+        },
       },
       { status: 201 }
     );
   } catch (error) {
     console.error("Signup Error:", error);
-    return NextResponse.json(
-      { message: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }

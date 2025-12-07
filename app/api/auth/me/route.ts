@@ -24,6 +24,7 @@ export async function GET(req: Request) {
           id: decoded.id,
           email: decoded.email,
           role: decoded.role,
+          fullName: decoded.fullname,
         },
       },
       { status: 200 }

@@ -1,252 +1,236 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSignup } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Mail, Lock, User, Eye, EyeOff, CheckCircle, X } from "lucide-react";
+import AnimatedPlane from "../../components/Animatedplane";
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    groupId: "",
   });
-  const [groups, setGroups] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const signup = useSignup();
   const client = useQueryClient();
   const router = useRouter();
 
-  // Fetch available groups
-  useEffect(() => {
-    const fetchGroups = async () => {
-      try {
-        const res = await fetch("/api/groups/getAvailableGroups");
-        const data = await res.json();
-        setGroups(data.groups || []);
-      } catch (err) {
-        console.error("Failed to fetch groups");
-      }
-    };
-    fetchGroups();
-  }, []);
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setMessage("");
 
-    if (!formData.name || !formData.email || !formData.password || !formData.groupId) {
+    if (!formData.name || !formData.email || !formData.password) {
       setError("All fields are required");
       return;
     }
 
     try {
-      await signup.mutateAsync(formData);
+      // Transform formData to match backend expectations
+      const signupData = {
+        fullName: formData.name,
+        email: formData.email,
+        password: formData.password,
+      };
+      await signup.mutateAsync(signupData);
+      setMessage("Account created successfully! Redirecting...");
       client.invalidateQueries({ queryKey: ["currentUser"] });
-      router.push("/dashboard");
+
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 500);
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1e3a8a] via-[#1e40af] to-[#2563eb] px-4 py-8">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 md:p-10">
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-[#1e40af] rounded-full flex items-center justify-center">
-            <svg
-              className="w-12 h-12 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f172a] to-[#1e293b] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Animated Plane */}
+        <div className="mb-8">
+          <AnimatedPlane />
+        </div>
+
+        {/* Signup Card */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-10">
+          {/* Title */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+              Create Account
+            </h2>
+            <p className="text-gray-600">Join the Airforce Training System</p>
+          </div>
+
+          {/* Status Messages */}
+          {message && (
+            <div className="mb-6 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+              <p className="text-sm">{message}</p>
+            </div>
+          )}
+          {error && (
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center">
+              <X className="h-5 w-5 mr-2 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Signup Form */}
+          <form onSubmit={handleSignup} className="space-y-5">
+            {/* Full Name */}
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Full Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  placeholder="John Mitchell"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="block text-gray-600 w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="your.email@airforce.mil"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="block text-gray-600 w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  id="password"
+                  placeholder="Create a strong password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="block w-full text-gray-600 pl-10 pr-12 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={signup.isPending}
+              className="w-full flex justify-center items-center py-3 px-4 rounded-lg text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
+              {signup.isPending ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <p className="text-center text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link
+                href="/auth/login"
+                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+              >
+                Login here
+              </Link>
+            </p>
           </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-2">
-          Create Account
-        </h1>
-        <p className="text-center text-gray-600 mb-8 text-sm md:text-base">
-          Join the Airforce Training System
-        </p>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSignup} className="space-y-5">
-          {/* Full Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="John Mitchell"
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-800 placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* Email Address */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="your.email@airforce.mil"
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-800 placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Create a strong password"
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-800 placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* Select Group */}
-          <div>
-            <label htmlFor="groupId" className="block text-sm font-medium text-gray-700 mb-2">
-              Select Group
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              <select
-                id="groupId"
-                name="groupId"
-                value={formData.groupId}
-                onChange={handleChange}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-800 appearance-none bg-white"
-              >
-                <option value="">Choose your group</option>
-                {groups.map((group: any) => (
-                  <option key={group._id} value={group._id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={signup.isPending}
-            className="w-full bg-[#1e40af] hover:bg-[#1e3a8a] text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-          >
-            {signup.isPending ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
-
-        {/* Login Link */}
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-[#1e40af] font-semibold hover:underline">
-            Login here
-          </Link>
+        {/* Footer Note */}
+        <p className="text-center text-gray-500 text-sm mt-6">
+          Secure registration for Airforce personnel
         </p>
       </div>
     </div>
