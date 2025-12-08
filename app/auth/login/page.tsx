@@ -39,13 +39,17 @@ export default function LoginPage() {
     }
 
     try {
-      await login.mutateAsync(formData);
-      setMessage("Login successful! Redirecting to Dashboard...");
+      const response = await login.mutateAsync(formData);
       client.invalidateQueries({ queryKey: ["currentUser"] });
 
+      // Redirect based on user role
+      const redirectPath =
+        response.user?.role === "admin" ? "/admin" : "/dashboard";
+      setMessage(`Login successful! Redirecting to Dashboard...`);
+
       setTimeout(() => {
-        router.push("/dashboard");
-        window.location.href = "/dashboard";
+        router.push(redirectPath);
+        window.location.href = redirectPath;
       }, 500);
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your credentials.");
