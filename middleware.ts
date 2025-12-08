@@ -1,22 +1,35 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
 
   // If no token and trying to access protected routes
   if (!token) {
-    if (req.nextUrl.pathname.startsWith("/admin") ||
-        req.nextUrl.pathname.startsWith("/student")) {
-      return NextResponse.redirect(new URL("/login", req.url));
+    if (
+      req.nextUrl.pathname.startsWith("/admin") ||
+      req.nextUrl.pathname.startsWith("/dashboard")
+    ) {
+      return NextResponse.redirect(new URL("/auth/login", req.url));
     }
     return NextResponse.next();
   }
 
-  // Decode token
+  // Verify token using `jose` (works in Edge runtime)
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const jwtSecret = process.env.JWT_SECRET || process.env.jwt_secret;
+    if (!jwtSecret) {
+      console.warn("JWT secret not set; cannot verify token in middleware.");
+      const res = NextResponse.redirect(new URL("/auth/login", req.url));
+      res.cookies.set("token", "", { maxAge: 0 });
+      return res;
+    }
+
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jwtVerify(token, secret);
+
+    const decoded = payload as Record<string, unknown>;
 
     // ADMIN ROUTES
     if (req.nextUrl.pathname.startsWith("/admin")) {
@@ -26,7 +39,7 @@ export function middleware(req: NextRequest) {
     }
 
     // STUDENT ROUTES
-    if (req.nextUrl.pathname.startsWith("/student")) {
+    if (req.nextUrl.pathname.startsWith("/dashboard")) {
       if (decoded.role !== "student") {
         return NextResponse.redirect(new URL("/unauthorized", req.url));
       }
@@ -36,7 +49,7 @@ export function middleware(req: NextRequest) {
   } catch (err) {
     // Invalid token → force logout
     console.log("Invalid token:", err);
-    const res = NextResponse.redirect(new URL("/login", req.url));
+    const res = NextResponse.redirect(new URL("/auth/login", req.url));
     res.cookies.set("token", "", { maxAge: 0 });
     return res;
   }
@@ -44,7 +57,7 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin/:path*",     // admin routes
-    "/student/:path*",   // student-only routes
+    "/admin/:path*", // admin routes
+    "/dashboard/:path*", // student-only routes
   ],
 };
