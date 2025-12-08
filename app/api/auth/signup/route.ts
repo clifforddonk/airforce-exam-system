@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const existing = await User.findOne({ email });
     if (existing) {
       return NextResponse.json(
-        { message: "Email already registered" },
+        { message: "Email already registered. Try a different email." },
         { status: 400 }
       );
     }
@@ -49,6 +49,16 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("Signup Error:", error);
-    return NextResponse.json({ message: "Server error" }, { status: 500 });
+    // Check for MongoDB duplicate key error
+    if (error instanceof Error && error.message.includes("duplicate key")) {
+      return NextResponse.json(
+        { message: "Email already registered" },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { message: "Server error. Please try again later." },
+      { status: 500 }
+    );
   }
 }
