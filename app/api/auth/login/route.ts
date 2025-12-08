@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 
 export async function POST(req: Request) {
   try {
@@ -34,17 +34,24 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create JWT payload
-    const tokenData = {
-      id: user._id,
+    // Create JWT payload and sign using `jose` (works in Edge/more portable runtimes)
+    const jwtSecret = process.env.JWT_SECRET || process.env.jwt_secret;
+    if (!jwtSecret) {
+      console.error("JWT secret not configured");
+      return NextResponse.json({ message: "Server error" }, { status: 500 });
+    }
+
+    const secret = new TextEncoder().encode(jwtSecret);
+    const token = await new SignJWT({
+      id: user._id.toString(),
       role: user.role,
       email: user.email,
       fullname: user.fullName,
-    };
-
-    const token = jwt.sign(tokenData, process.env.JWT_SECRET!, {
-      expiresIn: "7d",
-    });
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("7d")
+      .sign(secret);
 
     // Set cookie
     const res = NextResponse.json(
@@ -62,7 +69,9 @@ export async function POST(req: Request) {
 
     res.cookies.set("token", token, {
       httpOnly: true,
-      secure: true,
+      // Use secure cookies in production only so dev (http://localhost) works
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
@@ -70,6 +79,16 @@ export async function POST(req: Request) {
     return res;
   } catch (error) {
     console.error("Login Error:", error);
-    return NextResponse.json({ message: "Server error" }, { status: 500 });
+    // More specific error messages
+    if (error instanceof Error && error.message.includes("JWT")) {
+      return NextResponse.json(
+        { message: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { message: "Server error. Please try again later." },
+      { status: 500 }
+    );
   }
 }
