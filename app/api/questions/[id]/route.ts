@@ -7,11 +7,12 @@ import { verifyToken } from "@/lib/auth";
 // GET /api/questions/[id] - Get single question
 export async function GET(
   _: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const question = await Question.findById(params.id);
+    const { id } = await params;
+    const question = await Question.findById(id);
 
     if (!question) {
       return NextResponse.json(
@@ -33,10 +34,11 @@ export async function GET(
 // PUT /api/questions/[id] - Update question (Admin only via middleware)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Verify user is authenticated (middleware ensures admin access)
     const cookieString = req.headers.get("cookie") || "";
@@ -44,7 +46,7 @@ export async function PUT(
 
     const data = await req.json();
 
-    const updated = await Question.findByIdAndUpdate(params.id, data, {
+    const updated = await Question.findByIdAndUpdate(id, data, {
       new: true,
     });
 
@@ -71,16 +73,17 @@ export async function PUT(
 // DELETE /api/questions/[id] - Delete question (Admin only via middleware)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Verify user is authenticated (middleware ensures admin access)
     const cookieString = req.headers.get("cookie") || "";
     await verifyToken(cookieString);
 
-    const deleted = await Question.findByIdAndDelete(params.id);
+    const deleted = await Question.findByIdAndDelete(id);
 
     if (!deleted) {
       return NextResponse.json(
