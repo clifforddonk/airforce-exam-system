@@ -14,7 +14,9 @@ export default function LandingPage() {
   useEffect(() => {
     if (!isLoading) {
       if (user) {
-        router.push("/dashboard");
+        // Redirect based on user role
+        const redirectPath = user.role === "admin" ? "/admin" : "/dashboard";
+        router.push(redirectPath);
       } else {
         setChecking(false);
       }
@@ -203,8 +205,6 @@ export default function LandingPage() {
           &copy; 2024 Airforce Training System. All rights reserved.
         </p>
       </footer>
-
-     
     </div>
   );
 }
