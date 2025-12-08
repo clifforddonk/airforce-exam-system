@@ -19,8 +19,38 @@
   }
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Prevent layout shift on mobile when sidebar opens */
+@media (max-width: 1024px) {
+  body.sidebar-open {
+    overflow: hidden;
+  }
+}
+
+/* Style select options for better visibility */
+select {
+  color: #111827;
+}
+
+select option {
+  color: #111827;
+  background-color: #ffffff;
+}
+
+/* Style input placeholder text for better visibility */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
 }
