@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useCurrentUser } from "@/hooks/useAuth";
+import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -19,12 +19,12 @@ import {
 
 export default function StudentDashboard() {
   const { data: user, isLoading } = useCurrentUser();
+  const logout = useLogout();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
-    // Call your logout API here
-    await fetch("/api/auth/logout", { method: "POST" });
+    await logout.mutateAsync();
     router.push("/auth/login");
   };
 

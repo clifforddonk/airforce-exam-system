@@ -1,11 +1,17 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useCurrentUser = () => {
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
       const res = await fetch("/api/auth/me", { cache: "no-store" });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (res.status === 401) {
+          // User not authenticated or token expired/invalid
+          console.log("Token invalid or expired");
+        }
+        return null;
+      }
       const data = await res.json();
       return data.user;
     },
@@ -19,8 +25,11 @@ export const useLogin = () => {
         method: "POST",
         body: JSON.stringify(credentials),
       });
-      if (!res.ok) throw new Error("Login failed");
-      return res.json();
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+      return data;
     },
   });
 };
@@ -32,8 +41,31 @@ export const useSignup = () => {
         method: "POST",
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Signup failed");
-      return res.json();
+      const response = await res.json();
+      if (!res.ok) {
+        throw new Error(response.message || "Signup failed");
+      }
+      return response;
+    },
+  });
+};
+
+export const useLogout = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Logout failed");
+      }
+      return data;
+    },
+    onSuccess: () => {
+      // Clear the currentUser cache so the app knows user is logged out
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
   });
 };
