@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
 export async function GET(req: Request) {
   try {
@@ -16,7 +16,19 @@ export async function GET(req: Request) {
       );
     }
 
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const jwtSecret = process.env.JWT_SECRET || process.env.jwt_secret;
+    if (!jwtSecret) {
+      console.error("JWT secret not configured");
+      return NextResponse.json(
+        { user: null, message: "Server error" },
+        { status: 500 }
+      );
+    }
+
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jwtVerify(token, secret);
+
+    const decoded = payload as Record<string, unknown>;
 
     return NextResponse.json(
       {
