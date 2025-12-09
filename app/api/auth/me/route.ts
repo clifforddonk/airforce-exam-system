@@ -28,7 +28,13 @@ export async function GET(req: Request) {
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jwtVerify(token, secret);
 
-    const decoded = payload as Record<string, unknown>;
+    const decoded = payload as {
+  id: string;
+  email: string;
+  role: string;
+  fullname: string;
+  group: number;
+};
 
     return NextResponse.json(
       {
@@ -37,6 +43,7 @@ export async function GET(req: Request) {
           email: decoded.email,
           role: decoded.role,
           fullName: decoded.fullname,
+          group: decoded.group,
         },
       },
       { status: 200 }
