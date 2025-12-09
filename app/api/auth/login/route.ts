@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       role: user.role,
       email: user.email,
       fullname: user.fullName,
+      group: user.group,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
           email: user.email,
           role: user.role,
           fullName: user.fullName,
+          group: user.group,
         },
       },
       { status: 200 }
