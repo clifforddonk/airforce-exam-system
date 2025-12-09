@@ -1,5 +1,6 @@
 "use client";
 import { useCurrentUser } from "@/hooks/useAuth";
+import { useSubmissions } from "@/hooks/useSubmissions";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -15,16 +16,37 @@ import {
   Plane,
 } from "lucide-react";
 
+const TOPICS = [
+  { id: "topic1", label: "Topic 1 – Airforce History & Protocol" },
+  { id: "topic2", label: "Topic 2 – Aircraft Systems" },
+  { id: "topic3", label: "Topic 3 – Flight Operations" },
+];
+
 export default function StudentDashboard() {
   const { data: user, isLoading } = useCurrentUser();
+  const { data: submissions = [], isLoading: submissionsLoading } =
+    useSubmissions();
 
-  if (isLoading) {
+  if (isLoading || submissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
+
+  // Get submission for a specific topic
+  const getSubmissionForTopic = (topicId: string) => {
+    return submissions.find((s) => s.topicId === topicId);
+  };
+
+  // Get latest submission
+  const latestSubmission = submissions.length > 0 ? submissions[0] : null;
+
+  // Calculate completed quizzes
+  const completedCount = submissions.length;
+  const totalQuizzes = TOPICS.length;
+  const completionPercentage = (completedCount / totalQuizzes) * 100;
 
   return (
     <>
@@ -35,12 +57,17 @@ export default function StudentDashboard() {
           <h1 className="text-2xl lg:text-3xl font-bold mb-2">
             Welcome back, {user?.fullName || "John Mitchell"}
           </h1>
+
           <p className="text-blue-100 mb-4">
             Continue your training and track your progress
           </p>
+
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg">
             <Users className="w-5 h-5" />
-            <span className="font-medium">Group 1</span>
+            <span className="font-medium">
+              {" "}
+              You have been assigned to Group {user?.group ?? "—"}
+            </span>
           </div>
         </div>
 
@@ -52,11 +79,13 @@ export default function StudentDashboard() {
               <h3 className="text-gray-600 font-medium">Quizzes Completed</h3>
               <BookOpen className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-3xl font-bold text-gray-800 mb-2">0 / 3</p>
+            <p className="text-3xl font-bold text-gray-800 mb-2">
+              {completedCount} / {totalQuizzes}
+            </p>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-blue-600 h-2 rounded-full"
-                style={{ width: "0%" }}
+                style={{ width: `${completionPercentage}%` }}
               ></div>
             </div>
           </div>
@@ -79,12 +108,25 @@ export default function StudentDashboard() {
               <h3 className="text-gray-600 font-medium">Latest Score</h3>
               <Award className="w-6 h-6 text-green-600" />
             </div>
-            <p className="text-3xl font-bold text-gray-800 mb-2">
-              No scores yet
-            </p>
-            <p className="text-sm text-gray-500">
-              Complete a quiz to see your score
-            </p>
+            {latestSubmission ? (
+              <>
+                <p className="text-3xl font-bold text-gray-800 mb-2">
+                  {latestSubmission.percentage}%
+                </p>
+                <p className="text-sm text-gray-500">
+                  {latestSubmission.topicName}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-gray-800 mb-2">
+                  No scores yet
+                </p>
+                <p className="text-sm text-gray-500">
+                  Complete a quiz to see your score
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -96,77 +138,63 @@ export default function StudentDashboard() {
               Available Quizzes
             </h2>
             <div className="space-y-4">
-              {/* Quiz 1 */}
-              <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+              {TOPICS.map((topic) => {
+                const submission = getSubmissionForTopic(topic.id);
+                const icon =
+                  topic.id === "topic1" ? (
                     <BookOpen className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800 mb-1">
-                      Topic 1 – Airforce History & Protocol
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Test your knowledge of Airforce history, rank structure,
-                      and military protocol.
-                    </p>
-                    <Link href="/quiz/1">
-                      <button className="w-full bg-[#0f172a] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#1e293b] transition-colors">
-                        Start Quiz
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quiz 2 */}
-              <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  ) : topic.id === "topic2" ? (
                     <Plane className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800 mb-1">
-                      Topic 2 – Aircraft Systems
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Understand aircraft mechanics and systems
-                    </p>
-                    <Link href="/quiz/2">
-                      <button className="w-full bg-[#0f172a] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#1e293b] transition-colors">
-                        Start Quiz
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quiz 3 */}
-              <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  ) : (
                     <Trophy className="w-6 h-6 text-blue-600" />
+                  );
+
+                return (
+                  <div
+                    key={topic.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                  >
+                    <div className="flex gap-4">
+                      <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        {icon}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-800 mb-1">
+                          {topic.label}
+                        </h3>
+                        {submission ? (
+                          <button
+                            disabled
+                            className="w-full bg-gray-200 text-gray-600 px-4 py-2 rounded-lg font-medium cursor-not-allowed"
+                          >
+                            Quiz Already Taken
+                          </button>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-600 mb-3">
+                              {topic.id === "topic1"
+                                ? "Test your knowledge of Airforce history, rank structure, and military protocol."
+                                : topic.id === "topic2"
+                                ? "Understand aircraft mechanics and systems"
+                                : "Master flight procedures and safety"}
+                            </p>
+                            <Link href={`/dashboard/quiz?topic=${topic.id}`}>
+                              <button className="w-full bg-[#0f172a] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#1e293b] transition-colors">
+                                Start Quiz
+                              </button>
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800 mb-1">
-                      Topic 3 – Flight Operations
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Master flight procedures and safety
-                    </p>
-                    <Link href="/quiz/3">
-                      <button className="w-full bg-[#0f172a] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#1e293b] transition-colors">
-                        Start Quiz
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Group Assignment */}
-          <div className="bg-whiterounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               Group Assignment (Topic 4)
             </h2>
@@ -183,7 +211,7 @@ export default function StudentDashboard() {
               <p className="text-xs text-gray-500 mb-6">
                 Click to upload PDF file
               </p>
-              <Link href="/group-assignment">
+              <Link href="/dashboard/assignment">
                 <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
                   Choose File
                 </button>
