@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { getNextGroup } from "@/lib/getNextGroup";
 
 export async function POST(req: Request) {
   try {
@@ -27,12 +28,14 @@ export async function POST(req: Request) {
 
     // Hash password
     const hashed = await bcrypt.hash(password, 10);
-
+    const group = await getNextGroup();
+    console.log("ASSIGNED GROUP:", group);
     // Create new user — role defaults to student
     const user = await User.create({
       fullName,
       email,
       password: hashed,
+      group,
     });
 
     return NextResponse.json(
@@ -43,6 +46,7 @@ export async function POST(req: Request) {
           fullName: user.fullName,
           email: user.email,
           role: user.role,
+          group: user.group,
         },
       },
       { status: 201 }
