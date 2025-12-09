@@ -48,7 +48,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
       label: "Student Results",
     },
     {
-      href: "/admin/groups",
+      href: "/admin/grading",
       icon: Users,
       label: "Group Submissions",
     },
