@@ -5,6 +5,7 @@ export interface JWTPayload {
   role: "admin" | "student";
   email: string;
   fullname: string;
+  group?: number;
 }
 
 /**
@@ -42,6 +43,7 @@ export async function verifyToken(cookieString?: string): Promise<JWTPayload> {
       role: payload.role as "admin" | "student",
       email: payload.email as string,
       fullname: payload.fullname as string,
+      group: payload.group as number | undefined,
     };
   } catch (error) {
     console.error("Token verification failed:", error);
