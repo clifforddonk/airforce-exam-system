@@ -152,3 +152,55 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    await connectDB();
+
+    // 1️⃣ Verify authentication
+    const cookieString = request.headers.get("cookie") || "";
+    const userData = await verifyToken(cookieString);
+
+    if (!userData || userData.role !== "student") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
+
+    // 2️⃣ Get student
+    const user = await User.findById(userData.id);
+    if (!user || !user.group) {
+      return NextResponse.json(
+        { message: "You are not assigned to a group" },
+        { status: 400 }
+      );
+    }
+
+    // 3️⃣ Fetch group
+    const group = await Group.findOne({ groupNumber: user.group });
+
+    if (!group) {
+      return NextResponse.json({ message: "Group not found" }, { status: 404 });
+    }
+
+    // 4️⃣ Optional: fetch submission info
+    let submission = null;
+    if (group.submissionId) {
+      submission = await GroupSubmission.findById(group.submissionId).select(
+        "fileName fileUrl uploadedAt"
+      );
+    }
+
+    // 5️⃣ Return only what frontend needs
+    return NextResponse.json({
+      groupNumber: group.groupNumber,
+      locked: group.locked,
+      hasSubmitted: !!group.submissionId,
+      submission,
+    });
+  } catch (error: any) {
+    console.error("Get group status error:", error);
+    return NextResponse.json(
+      { message: error.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
