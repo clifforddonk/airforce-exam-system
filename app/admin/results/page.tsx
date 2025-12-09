@@ -25,14 +25,62 @@ export default function StudentResultsPage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const response = await fetch("/api/admin/submissions");
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Fetched results:", data);
-          setResults(data);
+        // Fetch student submissions and group submissions in parallel
+        const [studentResponse, groupResponse] = await Promise.all([
+          fetch("/api/admin/submissions"),
+          fetch("/api/admin/submissions/groups"),
+        ]);
+
+        if (!studentResponse.ok) {
+          const errorData = await studentResponse.json();
+          setError(errorData.message || "Failed to fetch student results");
+          setLoading(false);
+          return;
+        }
+
+        const studentData = await studentResponse.json();
+        console.log("Fetched student results:", studentData);
+
+        // If group response is available, merge group scores
+        if (groupResponse.ok) {
+          const groupData = await groupResponse.json();
+          console.log("Fetched group submissions:", groupData);
+
+          // Create a map of group numbers to scores
+          const groupScoresMap = new Map<number, number>();
+          groupData.submissions?.forEach((submission: any) => {
+            if (submission.score !== null) {
+              groupScoresMap.set(submission.groupNumber, submission.score);
+            }
+          });
+
+          // Merge group scores with student results
+          const mergedResults = studentData.map((student: StudentResult) => {
+            const groupSubmissionScore = student.group
+              ? groupScoresMap.get(parseInt(student.group))
+              : undefined;
+
+            // Calculate total as sum of all topics and group score
+            const scores = [
+              student.topic1,
+              student.topic2,
+              student.topic3,
+              groupSubmissionScore,
+            ].filter((score): score is number => score !== undefined);
+
+            const total = scores.reduce((sum, score) => sum + score, 0);
+
+            return {
+              ...student,
+              groupScore: groupSubmissionScore,
+              total,
+            };
+          });
+
+          setResults(mergedResults);
         } else {
-          const errorData = await response.json();
-          setError(errorData.message || "Failed to fetch results");
+          // If group fetch fails, just use student data
+          setResults(studentData);
         }
       } catch (error) {
         console.error("Error fetching results:", error);

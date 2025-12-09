@@ -12,13 +12,11 @@ import {
   FileText,
   CheckCircle,
   Clock,
-  ChevronUp,
-  ChevronDown,
   Save,
   ExternalLink,
 } from "lucide-react";
 
-type SortField = "group" | "date" | "score" | "status";
+type SortField = "group" | "score" | "status";
 type SortOrder = "asc" | "desc";
 
 export default function AdminGradingPage() {
@@ -26,18 +24,13 @@ export default function AdminGradingPage() {
     undefined
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>("date");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>("status");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [editingScores, setEditingScores] = useState<Record<string, string>>(
     {}
   );
-  const [editingFeedback, setEditingFeedback] = useState<
-    Record<string, string>
-  >({});
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const itemsPerPage = 20;
+  const itemsPerPage = 50;
 
   // Fetch submissions
   const { data, isLoading, error } = useGroupSubmissions(filterGraded);
@@ -55,7 +48,6 @@ export default function AdminGradingPage() {
       filtered = filtered.filter(
         (sub) =>
           sub.groupNumber.toString().includes(query) ||
-          sub.fileName.toLowerCase().includes(query) ||
           sub.uploadedBy.fullName.toLowerCase().includes(query)
       );
     }
@@ -67,10 +59,6 @@ export default function AdminGradingPage() {
       switch (sortField) {
         case "group":
           comparison = a.groupNumber - b.groupNumber;
-          break;
-        case "date":
-          comparison =
-            new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime();
           break;
         case "score":
           const aScore = a.score ?? -1;
@@ -87,13 +75,6 @@ export default function AdminGradingPage() {
 
     return filtered;
   }, [data?.submissions, searchQuery, sortField, sortOrder]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
-  const paginatedSubmissions = filteredSubmissions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   // Handle sort
   const handleSort = (field: SortField) => {
@@ -116,22 +97,15 @@ export default function AdminGradingPage() {
       return;
     }
 
-    const feedback = editingFeedback[submission.id]?.trim() || undefined;
-
     gradeMutation.mutate(
       {
         id: submission.id,
-        data: { score, feedback },
+        data: { score, feedback: undefined },
       },
       {
         onSuccess: () => {
           // Clear editing state
           setEditingScores((prev) => {
-            const next = { ...prev };
-            delete next[submission.id];
-            return next;
-          });
-          setEditingFeedback((prev) => {
             const next = { ...prev };
             delete next[submission.id];
             return next;
@@ -144,62 +118,9 @@ export default function AdminGradingPage() {
     );
   };
 
-  // Toggle row expansion
-  const toggleRow = (id: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  // Export to CSV
-  const handleExportCSV = () => {
-    if (!data?.submissions) return;
-
-    const headers = [
-      "Group",
-      "File Name",
-      "Uploaded By",
-      "Date",
-      "Score",
-      "Feedback",
-    ];
-    const rows = data.submissions.map((sub) => [
-      sub.groupNumber,
-      sub.fileName,
-      sub.uploadedBy.fullName,
-      new Date(sub.uploadedAt).toLocaleDateString(),
-      sub.score ?? "Not Graded",
-      sub.feedback ?? "",
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `group-submissions-${
-      new Date().toISOString().split("T")[0]
-    }.csv`;
-    a.click();
-  };
-
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
-    return sortOrder === "asc" ? (
-      <ChevronUp className="w-4 h-4" />
-    ) : (
-      <ChevronDown className="w-4 h-4" />
-    );
+    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   if (isLoading) {
@@ -235,13 +156,6 @@ export default function AdminGradingPage() {
             <h1 className="text-3xl font-bold text-gray-900">
               Group Submissions
             </h1>
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
           </div>
           <p className="text-gray-600">
             Review and grade PDF submissions from student groups
@@ -286,11 +200,10 @@ export default function AdminGradingPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search by group, file name, or uploader..."
+                placeholder="Search by group or uploader..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  setCurrentPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -301,7 +214,6 @@ export default function AdminGradingPage() {
               <button
                 onClick={() => {
                   setFilterGraded(undefined);
-                  setCurrentPage(1);
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
                   filterGraded === undefined
@@ -314,7 +226,6 @@ export default function AdminGradingPage() {
               <button
                 onClick={() => {
                   setFilterGraded(false);
-                  setCurrentPage(1);
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
                   filterGraded === false
@@ -327,7 +238,6 @@ export default function AdminGradingPage() {
               <button
                 onClick={() => {
                   setFilterGraded(true);
-                  setCurrentPage(1);
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
                   filterGraded === true
@@ -349,266 +259,137 @@ export default function AdminGradingPage() {
                 <tr>
                   <th
                     onClick={() => handleSort("group")}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       Group
-                      <SortIcon field="group" />
+                      <span>
+                        {sortField === "group" ? (
+                          <SortIcon field="group" />
+                        ) : (
+                          ""
+                        )}
+                      </span>
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                    File Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Uploaded By
                   </th>
                   <th
-                    onClick={() => handleSort("date")}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  >
-                    <div className="flex items-center gap-1">
-                      Date
-                      <SortIcon field="date" />
-                    </div>
-                  </th>
-                  <th
                     onClick={() => handleSort("score")}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       Score
-                      <SortIcon field="score" />
+                      <span>
+                        {sortField === "score" ? (
+                          <SortIcon field="score" />
+                        ) : (
+                          ""
+                        )}
+                      </span>
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {paginatedSubmissions.length === 0 ? (
+                {filteredSubmissions.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
-                      className="px-4 py-12 text-center text-gray-500"
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-gray-500"
                     >
                       <FileText className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                       <p>No submissions found</p>
                     </td>
                   </tr>
                 ) : (
-                  paginatedSubmissions.map((submission) => {
-                    const isExpanded = expandedRows.has(submission.id);
+                  filteredSubmissions.map((submission) => {
                     const currentScore =
                       editingScores[submission.id] ??
                       submission.score?.toString() ??
                       "";
-                    const currentFeedback =
-                      editingFeedback[submission.id] ??
-                      submission.feedback ??
-                      "";
                     const hasChanges =
-                      editingScores[submission.id] !== undefined ||
-                      editingFeedback[submission.id] !== undefined;
+                      editingScores[submission.id] !== undefined;
 
                     return (
-                      <>
-                        <tr key={submission.id} className="hover:bg-gray-50">
-                          {/* Group */}
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <button
-                              onClick={() => toggleRow(submission.id)}
-                              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                      <tr key={submission.id} className="hover:bg-gray-50">
+                        {/* Group */}
+                        <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">
+                          Group {submission.groupNumber}
+                        </td>
+
+                        {/* Uploaded By */}
+                        <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">
+                          {submission.uploadedBy.fullName}
+                        </td>
+
+                        {/* Score */}
+                        <td className="px-6 py-3 text-gray-700 whitespace-nowrap">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={currentScore}
+                            onChange={(e) =>
+                              setEditingScores((prev) => ({
+                                ...prev,
+                                [submission.id]: e.target.value,
+                              }))
+                            }
+                            placeholder="0-100"
+                            className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          />
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <a
+                              href={submission.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 transition text-xs font-medium flex items-center gap-1"
+                              title="View PDF"
                             >
-                              {isExpanded ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronUp className="w-4 h-4" />
-                              )}
-                              Group {submission.groupNumber}
+                              <ExternalLink className="w-4 h-4" />
+                              View submission
+                            </a>
+                            <button
+                              onClick={() => handleGradeSubmit(submission)}
+                              disabled={gradeMutation.isPending}
+                              className={`transition text-xs font-medium flex items-center gap-1 ${
+                                hasChanges
+                                  ? "text-green-600 hover:text-green-800"
+                                  : "text-gray-400 cursor-not-allowed"
+                              }`}
+                              title="Save Grade"
+                            >
+                              <Save className="w-4 h-4" />
+                              Save Score
                             </button>
-                          </td>
-
-                          {/* File Name */}
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-900 truncate max-w-xs">
-                                {submission.fileName}
+                            {/* {submission.score !== null && (
+                              <span className="text-green-600 text-xs font-medium flex items-center gap-1">
+                                <CheckCircle className="w-4 h-4" />
                               </span>
-                            </div>
-                          </td>
-
-                          {/* Uploaded By */}
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                            {submission.uploadedBy.fullName}
-                          </td>
-
-                          {/* Date */}
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                            {new Date(
-                              submission.uploadedAt
-                            ).toLocaleDateString()}
-                          </td>
-
-                          {/* Score */}
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={currentScore}
-                              onChange={(e) =>
-                                setEditingScores((prev) => ({
-                                  ...prev,
-                                  [submission.id]: e.target.value,
-                                }))
-                              }
-                              placeholder="0-100"
-                              className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                            />
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={submission.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded transition"
-                                title="View PDF"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                              <button
-                                onClick={() => handleGradeSubmit(submission)}
-                                disabled={gradeMutation.isPending}
-                                className={`p-2 rounded transition ${
-                                  hasChanges
-                                    ? "text-green-600 hover:bg-green-50"
-                                    : "text-gray-400 hover:bg-gray-50"
-                                }`}
-                                title="Save Grade"
-                              >
-                                <Save className="w-4 h-4" />
-                              </button>
-                              {submission.score !== null && (
-                                <CheckCircle
-                                  className="w-4 h-4 text-green-600"
-                                  title="Graded"
-                                />
-                              )}
-                              {submission.score === null && (
-                                <Clock
-                                  className="w-4 h-4 text-orange-600"
-                                  title="Pending"
-                                />
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* Expanded Row */}
-                        {isExpanded && (
-                          <tr className="bg-gray-50">
-                            <td colSpan={6} className="px-4 py-4">
-                              <div className="space-y-3">
-                                {/* Feedback */}
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                                    Feedback
-                                  </label>
-                                  <textarea
-                                    value={currentFeedback}
-                                    onChange={(e) =>
-                                      setEditingFeedback((prev) => ({
-                                        ...prev,
-                                        [submission.id]: e.target.value,
-                                      }))
-                                    }
-                                    rows={2}
-                                    placeholder="Enter feedback for the group..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
-                                  />
-                                </div>
-
-                                {/* Group Members */}
-                                <div>
-                                  <p className="text-xs font-medium text-gray-700 mb-1">
-                                    Group Members ({submission.students.length}
-                                    ):
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {submission.students.map((student) => (
-                                      <span
-                                        key={student._id}
-                                        className="px-2 py-1 bg-white border border-gray-200 text-gray-700 rounded text-xs"
-                                      >
-                                        {student.fullName}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
+                            )}
+                            {submission.score === null && (
+                              <span className="text-orange-600 text-xs font-medium flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                              </span>
+                            )} */}
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })
                 )}
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-              <p className="text-sm text-gray-700">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                {Math.min(
-                  currentPage * itemsPerPage,
-                  filteredSubmissions.length
-                )}{" "}
-                of {filteredSubmissions.length} results
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  Previous
-                </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1 border rounded text-sm ${
-                        currentPage === page
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
