@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useCurrentUser } from "@/hooks/useAuth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface Question {
   _id: string;
@@ -12,17 +10,24 @@ interface Question {
   category: string;
 }
 
+interface QuizSession {
+  topicId: string;
+  startTime: number;
+  answers: { [key: string]: number };
+  currentQuestionIndex: number;
+}
+
 const TOPICS = [
   { id: "topic1", label: "Topic 1 – Airforce History & Protocol" },
   { id: "topic2", label: "Topic 2 – Aircraft Systems" },
   { id: "topic3", label: "Topic 3 – Flight Operations" },
 ];
 
-export default function QuizPage() {
-  const { data: user, isLoading: userLoading } = useCurrentUser();
+const QUIZ_DURATION = 600; // 10 minutes in seconds
+
+export default function SecureQuizPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
   const topicParam = searchParams.get("topic");
 
   const [selectedTopic, setSelectedTopic] = useState<(typeof TOPICS)[0] | null>(
@@ -40,49 +45,187 @@ export default function QuizPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [showReview, setShowReview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [showTabWarning, setShowTabWarning] = useState(false);
+  const [quizLocked, setQuizLocked] = useState(false);
+  const [lockMessage, setLockMessage] = useState("");
 
-  // Set topic from URL params on mount
+  // Check if quiz is already completed
   useEffect(() => {
-    if (topicParam) {
+    const checkCompletion = () => {
+      if (!topicParam) return;
+
+      try {
+        const completed = localStorage.getItem(`quiz_completed_${topicParam}`);
+        if (completed === "true") {
+          setQuizLocked(true);
+          setLockMessage("You have already completed this quiz.");
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.log("No completion record found");
+      }
+
       const topic = TOPICS.find((t) => t.id === topicParam);
       if (topic) {
         setSelectedTopic(topic);
+        loadOrStartQuiz(topic);
       }
-    }
+    };
+
+    checkCompletion();
   }, [topicParam]);
 
-  // Fetch questions when topic is selected
-  useEffect(() => {
-    if (selectedTopic) {
-      setLoading(true);
-      fetch(`/api/questions?category=${selectedTopic.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setQuestions(data);
-          setTimeLeft(600); // 10 minutes
-          setUserAnswers({});
-          setCurrentQuestionIndex(0);
-          setQuizCompleted(false);
-          setScoreData(null);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching questions:", error);
-          setLoading(false);
-        });
+  // Load existing session or start new quiz
+  const loadOrStartQuiz = async (topic: (typeof TOPICS)[0]) => {
+    setLoading(true);
+
+    try {
+      // Check for existing session
+      const sessionData = localStorage.getItem(`quiz_session_${topic.id}`);
+
+      if (sessionData) {
+        const session: QuizSession = JSON.parse(sessionData);
+
+        // Fetch questions
+        const res = await fetch(`/api/questions?category=${topic.id}`);
+        const data = await res.json();
+        setQuestions(data);
+
+        // Restore session
+        setUserAnswers(session.answers);
+        setCurrentQuestionIndex(session.currentQuestionIndex);
+
+        // Calculate remaining time
+        const elapsed = Math.floor((Date.now() - session.startTime) / 1000);
+        const remaining = Math.max(0, QUIZ_DURATION - elapsed);
+        setTimeLeft(remaining);
+
+        if (remaining === 0) {
+          // Time's up, auto-submit
+          handleSubmit(data, session.answers);
+        }
+      } else {
+        // Start new quiz
+        const res = await fetch(`/api/questions?category=${topic.id}`);
+        const data = await res.json();
+        setQuestions(data);
+
+        const newSession: QuizSession = {
+          topicId: topic.id,
+          startTime: Date.now(),
+          answers: {},
+          currentQuestionIndex: 0,
+        };
+
+        localStorage.setItem(
+          `quiz_session_${topic.id}`,
+          JSON.stringify(newSession)
+        );
+        setTimeLeft(QUIZ_DURATION);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading quiz:", error);
+      setLoading(false);
     }
-  }, [selectedTopic]);
+  };
+
+  // Save session whenever answers or current question changes
+  useEffect(() => {
+    if (selectedTopic && !quizCompleted) {
+      const saveSession = () => {
+        try {
+          const sessionData = localStorage.getItem(
+            `quiz_session_${selectedTopic.id}`
+          );
+          if (sessionData) {
+            const session: QuizSession = JSON.parse(sessionData);
+            session.answers = userAnswers;
+            session.currentQuestionIndex = currentQuestionIndex;
+            localStorage.setItem(
+              `quiz_session_${selectedTopic.id}`,
+              JSON.stringify(session)
+            );
+          }
+        } catch (error) {
+          console.error("Error saving session:", error);
+        }
+      };
+      saveSession();
+    }
+  }, [userAnswers, currentQuestionIndex, selectedTopic, quizCompleted]);
 
   // Timer effect
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (selectedTopic && timeLeft > 0 && !quizCompleted) {
       timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-    } else if (timeLeft === 0 && !quizCompleted && selectedTopic) {
+    } else if (
+      timeLeft === 0 &&
+      !quizCompleted &&
+      selectedTopic &&
+      questions.length > 0
+    ) {
       handleSubmit();
     }
     return () => clearTimeout(timer);
   }, [timeLeft, quizCompleted, selectedTopic]);
+
+  // Tab visibility detection
+  useEffect(() => {
+    if (!quizCompleted && selectedTopic) {
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          setTabSwitchCount((prev) => prev + 1);
+          setShowTabWarning(true);
+          setTimeout(() => setShowTabWarning(false), 3000);
+        }
+      };
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () =>
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+    }
+  }, [quizCompleted, selectedTopic]);
+
+  // Browser close warning
+  useEffect(() => {
+    if (!quizCompleted && selectedTopic) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      };
+
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      return () =>
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+    }
+  }, [quizCompleted, selectedTopic]);
+
+  // Disable copy/paste
+  useEffect(() => {
+    const preventCopy = (e: Event) => e.preventDefault();
+    const preventContextMenu = (e: Event) => e.preventDefault();
+
+    if (!quizCompleted && selectedTopic) {
+      document.addEventListener("copy", preventCopy);
+      document.addEventListener("cut", preventCopy);
+      document.addEventListener("contextmenu", preventContextMenu);
+
+      return () => {
+        document.removeEventListener("copy", preventCopy);
+        document.removeEventListener("cut", preventCopy);
+        document.removeEventListener("contextmenu", preventContextMenu);
+      };
+    }
+  }, [quizCompleted, selectedTopic]);
 
   const handleSelect = (questionId: string, selectedIndex: number) => {
     setUserAnswers((prev) => ({ ...prev, [questionId]: selectedIndex }));
@@ -100,45 +243,66 @@ export default function QuizPage() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!user || !selectedTopic) return;
+  const handleSubmit = async (
+    questionsData?: Question[],
+    answersData?: { [key: string]: number }
+  ) => {
+    if (!selectedTopic) return;
+
+    const quizQuestions = questionsData || questions;
+    const quizAnswers = answersData || userAnswers;
 
     let correctAnswers = 0;
 
-    // Calculate correct answers
-    questions.forEach((question) => {
-      if (userAnswers[question._id] === question.correctAnswer) {
+    quizQuestions.forEach((question) => {
+      if (quizAnswers[question._id] === question.correctAnswer) {
         correctAnswers += 1;
       }
     });
 
-    const totalQuestions = questions.length;
+    const totalQuestions = quizQuestions.length;
     const finalScore = `${correctAnswers}/${totalQuestions}`;
     const percentageScore = Math.round((correctAnswers / totalQuestions) * 100);
 
-    // Submit to backend
     setSubmitting(true);
     try {
+      const sessionData = localStorage.getItem(
+        `quiz_session_${selectedTopic.id}`
+      );
+      let startTime = Date.now();
+      if (sessionData) {
+        const session: QuizSession = JSON.parse(sessionData);
+        startTime = session.startTime;
+      }
+      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+      // Submit to your backend API
       const response = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user.id,
           topicId: selectedTopic.id,
           topicName: selectedTopic.label,
-          answers: userAnswers,
+          answers: quizAnswers,
           score: correctAnswers,
           totalQuestions: totalQuestions,
           percentage: percentageScore,
-          timeSpent: 600 - timeLeft,
+          timeSpent: timeSpent,
+          tabSwitches: tabSwitchCount,
         }),
       });
 
       if (response.ok) {
+        // Mark quiz as completed
+        localStorage.setItem(`quiz_completed_${selectedTopic.id}`, "true");
+
+        // Clear session
+        localStorage.removeItem(`quiz_session_${selectedTopic.id}`);
+
         setScoreData({ score: finalScore, percentage: percentageScore });
         setQuizCompleted(true);
-        // Invalidate submissions query so dashboard updates immediately
-        await queryClient.invalidateQueries({ queryKey: ["submissions"] });
+      } else {
+        throw new Error("Submission failed");
       }
     } catch (error) {
       console.error("Error submitting quiz:", error);
@@ -146,12 +310,6 @@ export default function QuizPage() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const startNewQuiz = () => {
-    setSelectedTopic(null);
-    setQuizCompleted(false);
-    setShowReview(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -241,29 +399,37 @@ export default function QuizPage() {
     );
   };
 
-  // Show loading while fetching user
-  if (userLoading) {
+  // Quiz locked screen
+  if (quizLocked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // If no topic in URL, redirect to dashboard
-  if (!selectedTopic && !loading) {
-    return (
-      <div className="p-4 lg:p-8 text-center">
-        <p className="text-gray-600 mb-4">No quiz selected</p>
-        <button
-          onClick={async () => {
-            await queryClient.invalidateQueries({ queryKey: ["submissions"] });
-            router.push("/dashboard");
-          }}
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg"
-        >
-          Return to Dashboard
-        </button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Quiz Already Completed
+          </h2>
+          <p className="text-gray-600 mb-6">{lockMessage}</p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition w-full"
+          >
+            Return to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -274,7 +440,7 @@ export default function QuizPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading quiz questions...</p>
+          <p className="text-gray-600">Loading quiz...</p>
         </div>
       </div>
     );
@@ -324,17 +490,17 @@ export default function QuizPage() {
                   Questions Answered: {Object.keys(userAnswers).length} of{" "}
                   {questions.length}
                 </p>
+                {tabSwitchCount > 0 && (
+                  <p className="text-orange-600 mt-2">
+                    ⚠️ Tab switches detected: {tabSwitchCount}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col space-y-3">
                 <button
                   className="border border-gray-300 hover:bg-gray-100 text-gray-700 py-2 px-6 rounded-lg transition"
-                  onClick={async () => {
-                    await queryClient.invalidateQueries({
-                      queryKey: ["submissions"],
-                    });
-                    router.push("/dashboard");
-                  }}
+                  onClick={() => router.push("/dashboard")}
                 >
                   Return to Dashboard
                 </button>
@@ -358,7 +524,14 @@ export default function QuizPage() {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="p-4 lg:p-8">
+    <div className="p-4 lg:p-8 select-none">
+      {/* Tab Switch Warning */}
+      {showTabWarning && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-pulse">
+          ⚠️ Warning: Tab switching detected! Stay on this page.
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -372,12 +545,31 @@ export default function QuizPage() {
             >
               Time Left: {formatTime(timeLeft)}
             </div>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="text-gray-500 hover:text-gray-700 text-sm"
-            >
-              Exit Quiz
-            </button>
+          </div>
+        </div>
+
+        {/* Warning Banner */}
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>Important:</strong> Do not close this window or switch
+                tabs. Copy/paste is disabled. Your progress is being monitored.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -460,7 +652,7 @@ export default function QuizPage() {
                 </button>
               ) : (
                 <button
-                  onClick={handleSubmit}
+                  onClick={() => handleSubmit()}
                   disabled={submitting}
                   className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition disabled:opacity-50"
                 >

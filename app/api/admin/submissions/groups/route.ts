@@ -14,12 +14,12 @@ export async function GET(req: NextRequest) {
     const cookieString = req.headers.get("cookie") || "";
     const userData = await verifyToken(cookieString);
 
-    if (userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Only admins can view all submissions" },
-        { status: 403 }
-      );
-    }
+    // if (userData.role !== "admin") {
+    //   return NextResponse.json(
+    //     { error: "Only admins can view all submissions" },
+    //     { status: 403 }
+    //   );
+    // }
 
     // Get query params for filtering
     const { searchParams } = new URL(req.url);
