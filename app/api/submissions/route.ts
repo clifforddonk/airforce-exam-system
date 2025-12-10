@@ -85,6 +85,8 @@ export async function POST(req: NextRequest) {
 
     // ✅ Calculate score and percentage server-side (NOT from frontend)
     const totalQuestions = questions.length;
+    const pointsPerQuestion = 2; // Each question = 2 points
+    const scoreInPoints = correctAnswers * pointsPerQuestion; // Convert to 20-point scale
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
 
     // Create submission with server-calculated score
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
       topicId: data.topicId,
       topicName: data.topicName,
       answers: data.answers,
-      score: correctAnswers, // ← Server-calculated
+      score: scoreInPoints, // ← Score in points (0-20), not raw count
       totalQuestions, // ← From database
       percentage, // ← Server-calculated
       timeSpent: data.timeSpent,
@@ -101,7 +103,7 @@ export async function POST(req: NextRequest) {
     });
 
     console.log(
-      `✅ Quiz submitted - User: ${user.id}, Topic: ${data.topicId}, Score: ${correctAnswers}/${totalQuestions}`
+      `✅ Quiz submitted - User: ${user.id}, Topic: ${data.topicId}, Score: ${scoreInPoints}/20 (${correctAnswers}/${totalQuestions} correct)`
     );
 
     return NextResponse.json(
@@ -109,9 +111,10 @@ export async function POST(req: NextRequest) {
         message: "Submission saved",
         submission: {
           id: submission._id,
-          score: submission.score,
+          score: submission.score, // Now in 20-point scale
           totalQuestions: submission.totalQuestions,
           percentage: submission.percentage,
+          correctAnswers: correctAnswers, // Include for reference
         },
       },
       { status: 201 }

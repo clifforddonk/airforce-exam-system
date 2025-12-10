@@ -9,13 +9,7 @@ import {
   useDeleteQuestion,
   type Question,
 } from "@/hooks/useQuestions";
-
-// Hardcoded topics
-const TOPICS = [
-  { id: "topic1", label: "Topic 1 – Airforce History & Protocol" },
-  { id: "topic2", label: "Topic 2 – Aircraft Systems" },
-  { id: "topic3", label: "Topic 3 – Flight Operations" },
-];
+import { TOPICS } from "@/lib/topicsConfig";
 
 // Local question type (without _id for new questions)
 type LocalQuestion = Omit<Question, "_id" | "category"> & {

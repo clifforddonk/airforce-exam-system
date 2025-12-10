@@ -165,9 +165,7 @@ export default function MyScoresPage() {
                         <span className="font-semibold text-blue-600">
                           {submission.score}
                         </span>
-                        <span className="text-gray-700">
-                          /{submission.totalQuestions}
-                        </span>
+                        <span className="text-gray-700">/20</span>
                       </td>
                       <td className="py-4 px-4 text-gray-900 font-medium">
                         {formatTime(submission.timeSpent)}
