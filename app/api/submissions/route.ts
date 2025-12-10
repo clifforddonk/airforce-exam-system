@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import Submission from "@/models/Submission";
+import Question from "@/models/Question";
 import { verifyToken } from "@/lib/auth";
 import mongoose from "mongoose";
 
@@ -14,14 +15,18 @@ export async function POST(req: NextRequest) {
     const cookieString = req.headers.get("cookie") || "";
     const user = await verifyToken(cookieString);
 
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const data = await req.json();
 
-    // Validate data
+    // Validate required fields (note: NO score/percentage in validation)
     if (
       !data.topicId ||
+      !data.topicName ||
       !data.answers ||
-      data.score === undefined ||
-      !data.totalQuestions
+      data.timeSpent === undefined
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -29,20 +34,86 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create submission with ObjectId
+    // ✅ PROTECTION LAYER 1: Check if already submitted for this topic
+    const existingSubmission = await Submission.findOne({
+      userId: user.id,
+      topicId: data.topicId,
+    });
+
+    if (existingSubmission) {
+      return NextResponse.json(
+        { error: "Quiz already completed. No retakes allowed." },
+        { status: 403 }
+      );
+    }
+
+    // ✅ Fetch questions for this topic to validate answers
+    const questions = await Question.find({ category: data.topicId });
+
+    if (questions.length === 0) {
+      return NextResponse.json(
+        { error: "Quiz questions not found" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ PROTECTION LAYER 2: Validate all answers and calculate score server-side
+    let correctAnswers = 0;
+    const answersMap = new Map(Object.entries(data.answers));
+
+    for (const question of questions) {
+      const questionIdStr = question._id.toString();
+      const userAnswer = answersMap.get(questionIdStr);
+
+      // Validate answer is valid (0-3 for multiple choice)
+      if (
+        userAnswer !== undefined &&
+        typeof userAnswer === "number" &&
+        (userAnswer < 0 || userAnswer > 3)
+      ) {
+        return NextResponse.json(
+          { error: "Invalid answers submitted" },
+          { status: 400 }
+        );
+      }
+
+      // Check if correct
+      if (userAnswer === question.correctAnswer) {
+        correctAnswers++;
+      }
+    }
+
+    // ✅ Calculate score and percentage server-side (NOT from frontend)
+    const totalQuestions = questions.length;
+    const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+
+    // Create submission with server-calculated score
     const submission = await Submission.create({
-      userId: new mongoose.Types.ObjectId(user.id), // Convert to ObjectId
+      userId: new mongoose.Types.ObjectId(user.id),
       topicId: data.topicId,
       topicName: data.topicName,
       answers: data.answers,
-      score: data.score,
-      totalQuestions: data.totalQuestions,
-      percentage: data.percentage,
+      score: correctAnswers, // ← Server-calculated
+      totalQuestions, // ← From database
+      percentage, // ← Server-calculated
       timeSpent: data.timeSpent,
+      tabSwitches: data.tabSwitches || 0,
     });
 
+    console.log(
+      `✅ Quiz submitted - User: ${user.id}, Topic: ${data.topicId}, Score: ${correctAnswers}/${totalQuestions}`
+    );
+
     return NextResponse.json(
-      { message: "Submission saved", submission },
+      {
+        message: "Submission saved",
+        submission: {
+          id: submission._id,
+          score: submission.score,
+          totalQuestions: submission.totalQuestions,
+          percentage: submission.percentage,
+        },
+      },
       { status: 201 }
     );
   } catch (error) {
