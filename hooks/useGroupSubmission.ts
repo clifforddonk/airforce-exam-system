@@ -1,5 +1,5 @@
 // hooks/useGroupSubmissions.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Types
 export interface GroupSubmission {
@@ -58,29 +58,33 @@ const fetchGroupSubmissions = async (
   groupNumber?: number
 ): Promise<SubmissionsResponse> => {
   const params = new URLSearchParams();
-  if (graded !== undefined) params.append('graded', graded.toString());
-  if (groupNumber) params.append('groupNumber', groupNumber.toString());
+  if (graded !== undefined) params.append("graded", graded.toString());
+  if (groupNumber) params.append("groupNumber", groupNumber.toString());
 
   const res = await fetch(`/api/admin/submissions/groups?${params.toString()}`);
-  if (!res.ok) throw new Error('Failed to fetch submissions');
+  if (!res.ok) throw new Error("Failed to fetch submissions");
   return res.json();
 };
 
 const gradeSubmission = async (id: string, data: GradePayload) => {
   const res = await fetch(`/api/admin/submissions/${id}/grade`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Failed to grade submission');
+  if (!res.ok) throw new Error("Failed to grade submission");
   return res.json();
 };
 
 // Hooks
 export const useGroupSubmissions = (graded?: boolean, groupNumber?: number) => {
   return useQuery({
-    queryKey: ['group-submissions', graded, groupNumber],
+    queryKey: ["group-submissions", graded, groupNumber],
     queryFn: () => fetchGroupSubmissions(graded, groupNumber),
+    staleTime: 3 * 60 * 1000, // ✅ Data fresh for 3 minutes
+    gcTime: 10 * 60 * 1000, // ✅ Garbage collect after 10 minutes
+    refetchOnMount: false, // ✅ Don't refetch on mount
+    refetchOnWindowFocus: true, // ✅ Refetch when user returns to tab
   });
 };
 
@@ -92,7 +96,7 @@ export const useGradeSubmission = () => {
       gradeSubmission(id, data),
     onSuccess: () => {
       // Invalidate all submission queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['group-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ["group-submissions"] });
     },
   });
 };
