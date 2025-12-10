@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import StudentSidebar from "../components/StudentSidebar";
@@ -9,7 +8,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: user, isLoading } = useCurrentUser();
+  const { isLoading } = useCurrentUser();
   const logout = useLogout();
   const router = useRouter();
 

@@ -33,7 +33,7 @@ export default function StudentSidebar({ onLogout }: StudentSidebarProps) {
       label: "Dashboard",
     },
     {
-      href: "dashboard/scores",
+      href: "/dashboard/scores",
       icon: Trophy,
       label: "My Scores",
     },

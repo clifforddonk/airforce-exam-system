@@ -54,11 +54,6 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
     },
 
     {
-      href: "/admin/analytics",
-      icon: BarChart3,
-      label: "Analytics",
-    },
-    {
       href: "/admin/questions",
       icon: HelpCircle,
       label: "Manage Questions",
