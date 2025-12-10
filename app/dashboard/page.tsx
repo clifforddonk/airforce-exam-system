@@ -1,19 +1,16 @@
 "use client";
 import { useCurrentUser } from "@/hooks/useAuth";
-import { useSubmissions } from "@/hooks/useSubmissions";
+import { useSubmissionsWithRefetch } from "@/hooks/useSubmissionsWithRefetch";
 import { useGroupSubmissions } from "../../hooks/useGroupSubmission";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  LayoutDashboard,
   BookOpen,
   Trophy,
   Upload,
-  LogOut,
-  Menu,
-  X,
   Users,
   FileText,
-  Award,
   Plane,
   Download,
   CheckCircle,
@@ -26,9 +23,22 @@ const TOPICS = [
 ];
 
 export default function StudentDashboard() {
+  const queryClient = useQueryClient();
   const { data: user, isLoading } = useCurrentUser();
   const { data: submissions = [], isLoading: submissionsLoading } =
-    useSubmissions();
+    useSubmissionsWithRefetch();
+
+  // ✅ NEW: Check if quiz was just submitted and refetch
+  useEffect(() => {
+    const justSubmitted = localStorage.getItem("quiz_just_submitted");
+    if (justSubmitted === "true") {
+      console.log(
+        "✅ Dashboard detected quiz submission - refetching submissions..."
+      );
+      queryClient.refetchQueries({ queryKey: ["submissions"] });
+      localStorage.removeItem("quiz_just_submitted");
+    }
+  }, [queryClient]);
 
   // Fetch group submissions for the student's group
   const { data: groupSubmissionsData, isLoading: groupSubmissionsLoading } =
@@ -46,9 +56,6 @@ export default function StudentDashboard() {
   const getSubmissionForTopic = (topicId: string) => {
     return submissions.find((s) => s.topicId === topicId);
   };
-
-  // Get latest submission
-  const latestSubmission = submissions.length > 0 ? submissions[0] : null;
 
   // Calculate completed quizzes
   const completedCount = submissions.length;
@@ -291,7 +298,7 @@ export default function StudentDashboard() {
                   Group Project Submission
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Upload your team's assignment for Group {user?.group}
+                  Upload your team&apos;s assignment for Group {user?.group}
                 </p>
                 <p className="text-xs text-gray-500 mb-6">
                   Click to upload PDF file
