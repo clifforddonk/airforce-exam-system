@@ -9,16 +9,17 @@ export interface ISubmission extends Document {
   totalQuestions: number;
   percentage: number;
   timeSpent: number;
+  tabSwitches: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const SubmissionSchema = new Schema<ISubmission>(
   {
-    userId: { 
+    userId: {
       type: Schema.Types.ObjectId, // Changed from String
       ref: "User", // Add reference to User model
-      required: true 
+      required: true,
     },
     topicId: { type: String, required: true },
     topicName: { type: String, required: true },
@@ -27,6 +28,7 @@ const SubmissionSchema = new Schema<ISubmission>(
     totalQuestions: { type: Number, required: true },
     percentage: { type: Number, required: true },
     timeSpent: { type: Number, required: true }, // in seconds
+    tabSwitches: { type: Number, default: 0 }, // Tab switch count
   },
   { timestamps: true }
 );
