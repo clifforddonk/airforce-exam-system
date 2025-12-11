@@ -28,12 +28,12 @@ export const TOPICS = [
   },
   {
     id: "topic3",
-    label: "Day 1 -Safety Management Systems",
+    label: "Day 1 - Safety Management Systems",
     description: "Master safety management systems and protocols",
   },
   {
     id: "topic4",
-    label: "Day 1 -Airside Safety Hazards",
+    label: "Day 1 - Airside Safety Hazards",
     description: "Identify and mitigate airside safety hazards",
   },
 ];
