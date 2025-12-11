@@ -103,6 +103,8 @@ export async function GET(request: Request) {
           user.topic2 = score;
         } else if (submission.topicId === "topic3") {
           user.topic3 = score;
+        } else if (submission.topicId === "topic4") {
+          user.topic4 = score;
         } else if (
           submission.topicId === "group" ||
           submission.topicName?.toLowerCase().includes("group")
@@ -118,6 +120,7 @@ export async function GET(request: Request) {
         user.topic1,
         user.topic2,
         user.topic3,
+        user.topic4,
         user.groupScore,
       ].filter((score): score is number => score !== undefined);
 
@@ -131,6 +134,7 @@ export async function GET(request: Request) {
         topic1: user.topic1,
         topic2: user.topic2,
         topic3: user.topic3,
+        topic4: user.topic4,
         groupScore: user.groupScore,
         total,
       };

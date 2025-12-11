@@ -12,6 +12,7 @@ interface StudentResult {
   topic1?: number;
   topic2?: number;
   topic3?: number;
+  topic4?: number;
   groupScore?: number;
   total: number;
 }
@@ -252,6 +253,9 @@ export default function StudentResultsPage() {
                     Topic 3
                   </th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-700">
+                    Topic 4
+                  </th>
+                  <th className="text-center py-4 px-6 font-semibold text-gray-700">
                     Group Score
                   </th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-700">
@@ -282,6 +286,9 @@ export default function StudentResultsPage() {
                     </td>
                     <td className="py-4 px-6 text-center">
                       <ScoreBadge score={result.topic3} />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <ScoreBadge score={result.topic4} />
                     </td>
                     <td className="py-4 px-6 text-center">
                       <ScoreBadge score={result.groupScore} />

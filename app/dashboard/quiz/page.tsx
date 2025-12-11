@@ -5,23 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, AlertCircle, Clock } from "lucide-react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
+import { TOPICS, QUIZ_CONFIG } from "@/lib/topicsConfig";
 
-const TOPICS = [
-  {
-    id: "topic1",
-    label: "Airforce Basics",
-  },
-  {
-    id: "topic2",
-    label: "Aircraft Knowledge",
-  },
-  {
-    id: "topic3",
-    label: "Flight Procedures",
-  },
-];
-
-const QUIZ_DURATION = 30 * 60; // 30 minutes in seconds
+const QUIZ_DURATION = QUIZ_CONFIG.quizDurationSeconds; // 10 minutes in seconds
 
 interface Question {
   _id: string;
@@ -53,6 +39,13 @@ export default function SecureQuizPage() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [scoreData, setScoreData] = useState<{
     score: string;
+    percentage: number;
+  } | null>(null);
+  const [reviewMode, setReviewMode] = useState(false);
+  const [reviewData, setReviewData] = useState<{
+    answers: { [key: string]: number };
+    questions: Question[];
+    score: number;
     percentage: number;
   } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -369,8 +362,8 @@ export default function SecureQuizPage() {
         const result = await response.json();
 
         // ✅ Use server-calculated score
-        const serverScore = result.submission.score;
-        const serverTotal = result.submission.totalQuestions;
+        const serverScore = result.submission.score; // Now in 20-point scale
+        const serverTotal = 20; // Maximum points per quiz
         const serverPercentage = result.submission.percentage;
         const finalScore = `${serverScore}/${serverTotal}`;
 
@@ -385,6 +378,17 @@ export default function SecureQuizPage() {
 
         setScoreData({ score: finalScore, percentage: serverPercentage });
         setQuizCompleted(true);
+
+        // ✅ Store answers for review
+        localStorage.setItem(
+          `quiz_answers_${selectedTopic.id}`,
+          JSON.stringify({
+            answers: userAnswers,
+            questions: questionsData || questions,
+            score: serverScore,
+            percentage: serverPercentage,
+          })
+        );
 
         // ✅ NEW: Immediately refetch submissions (force all instances to update)
         await queryClient.refetchQueries({ queryKey: ["submissions"] });
@@ -471,11 +475,13 @@ export default function SecureQuizPage() {
                 </div>
               </div>
 
-              <Link href="/dashboard">
-                <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">
-                  Return to Dashboard
-                </button>
-              </Link>
+              <div className="flex gap-4 justify-center">
+                <Link href="/dashboard">
+                  <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">
+                    Return to Dashboard
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

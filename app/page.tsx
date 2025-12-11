@@ -5,6 +5,7 @@ import { useCurrentUser } from "@/hooks/useAuth";
 import Link from "next/link";
 import { Loader2, BookOpen, Plane, User, TrendingUp } from "lucide-react";
 import AnimatedPlane from "./components/Animatedplane";
+import { TOPICS } from "@/lib/topicsConfig";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -87,114 +88,44 @@ export default function LandingPage() {
           </p>
 
           {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2  gap-11 max-w-6xl mx-auto p-6 md:p-0">
-            {/* Feature 1 */}
-            <div className="bg-white  backdrop-blur-sm border border-white/10 rounded-2xl p-7  transition-all duration-300 group">
-              <div className="flex gap-2">
-                <div>
-                  <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                    <BookOpen className="h-7 w-7 text-blue-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-11 max-w-6xl mx-auto p-6 md:p-0">
+            {TOPICS.map((topic, index) => (
+              <div
+                key={topic.id}
+                className="bg-white backdrop-blur-sm border border-white/10 rounded-2xl p-7 transition-all duration-300 group"
+              >
+                <div className="flex gap-2">
+                  <div>
+                    <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
+                      {index === 0 ? (
+                        <BookOpen className="h-7 w-7 text-blue-500" />
+                      ) : index === 1 ? (
+                        <Plane className="h-7 w-7 text-blue-500" />
+                      ) : index === 2 ? (
+                        <TrendingUp className="h-7 w-7 text-blue-500" />
+                      ) : (
+                        <User className="h-7 w-7 text-blue-500" />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-lg px-1 text-gray-700 text-left mb-2">
+                      {topic.label}
+                    </p>
+                    <p className="text-gray-500 font-extralight text-left px-1">
+                      {topic.description}
+                    </p>
                   </div>
                 </div>
                 <div>
-                  <p className="font-semibold text-lg px-1 text-gray-700 text-left mb-2">
-                    Topic 1 – Airforce History & Protocol
-                  </p>
-                  <p className="text-gray-500 font-extralight  text-left px-1">
-                    Test your knowledge of Airforce history, rank structure, and
-                    military protocol.
-                  </p>
+                  <Link href="/auth/login">
+                    <button className="w-full cursor-pointer bg-[#0a1628] rounded-lg mt-8 py-3 text-white font-medium">
+                      {index === 3 ? "Upload PDF" : "Start Quiz"}
+                    </button>
+                  </Link>
                 </div>
               </div>
-              <div>
-                <Link href="/auth/login">
-                  <button className="w-full cursor-pointer bg-[#0a1628] rounded-lg mt-8 py-3 text-white font-medium">
-                    Start Quiz
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-white  backdrop-blur-sm border border-white/10 rounded-2xl p-7  transition-all duration-300 group">
-              <div className="flex gap-2">
-                <div>
-                  <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                    <Plane className="h-7 w-7 text-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <p className="font-semibold text-lg px-1 text-gray-700 text-left mb-2">
-                    Topic 2 – Airforce History & Protocol
-                  </p>
-                  <p className="text-gray-500 font-extralight  text-left px-1">
-                    Understand aircraft mechanics, systems operations, and
-                    technical specifications.
-                  </p>
-                </div>
-              </div>
-              <div>
-                <Link href="/auth/login">
-                  <button className="w-full cursor-pointer bg-[#0a1628] rounded-lg mt-8 py-3 text-white font-medium">
-                    Start Quiz
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-white  backdrop-blur-sm border border-white/10 rounded-2xl p-7  transition-all duration-300 group">
-              <div className="flex gap-2">
-                <div>
-                  <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                    <TrendingUp className="h-7 w-7 text-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <p className="font-semibold text-lg px-1 text-gray-700 text-left mb-2">
-                    Topic 3 – Flight Operations
-                  </p>
-                  <p className="text-gray-500 font-extralight  text-left px-1">
-                    Master flight procedures, navigation, and operational safety
-                    standards.
-                  </p>
-                </div>
-              </div>
-              <div>
-                <Link href="/auth/login">
-                  <button className="w-full cursor-pointer bg-[#0a1628] rounded-lg mt-8 py-3 text-white font-medium">
-                    Start Quiz
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-white  backdrop-blur-sm border border-white/10 rounded-2xl p-7  transition-all duration-300 group">
-              <div className="flex gap-2">
-                <div>
-                  <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                    <User className="h-7 w-7 text-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <p className="font-semibold text-lg px-1 text-gray-700 text-left mb-2">
-                    Topic 4 – Group Assigments
-                  </p>
-                  <p className="text-gray-500 font-extralight  text-left px-1">
-                    Collaborative group project submission. Upload your team's
-                    assignment in PDF format.
-                  </p>
-                </div>
-              </div>
-              <div>
-                <Link href="/auth/login">
-                  <button className="w-full cursor-pointer bg-[#0a1628] rounded-lg mt-8 py-3 text-white font-medium">
-                    Upload PDF
-                  </button>
-                </Link>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

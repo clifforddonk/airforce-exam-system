@@ -3,18 +3,7 @@ import { useCurrentUser } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Users, BookOpen, Trophy, TrendingUp } from "lucide-react";
-
-// ✅ CONFIGURABLE: Change these values to adjust scoring
-const QUIZ_CONFIG = {
-  totalQuizzes: 3, // Number of quizzes
-  pointsPerQuiz: 60, // Points for each quiz
-  groupProjectPoints: 80, // Points for group project
-};
-
-// Calculate max possible score
-const MAX_POSSIBLE_SCORE =
-  QUIZ_CONFIG.totalQuizzes * QUIZ_CONFIG.pointsPerQuiz +
-  QUIZ_CONFIG.groupProjectPoints;
+import { QUIZ_CONFIG, MAX_POSSIBLE_SCORE } from "@/lib/topicsConfig";
 
 interface StudentSubmission {
   userId: string;
