@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/hooks/useAuth";
 import Link from "next/link";
 import { Download, ArrowLeft } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface StudentResult {
   userId: string;
@@ -20,33 +21,46 @@ interface StudentResult {
 export default function StudentResultsPage() {
   const { data: user, isLoading } = useCurrentUser();
   const [results, setResults] = useState<StudentResult[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ Fetch student submissions with React Query caching
+  const {
+    data: studentData,
+    isLoading: studentLoading,
+    isError: studentError,
+  } = useQuery({
+    queryKey: ["admin-submissions"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/submissions");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch student results");
+      }
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000, // ✅ Cache for 10 minutes
+    gcTime: 30 * 60 * 1000, // ✅ Keep in cache for 30 minutes
+    refetchOnMount: false,
+  });
+
+  // ✅ Fetch group submissions with React Query caching
+  const { data: groupData, isLoading: groupLoading } = useQuery({
+    queryKey: ["admin-group-submissions"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/submissions/groups");
+      if (!response.ok) throw new Error("Failed to fetch group submissions");
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000, // ✅ Cache for 10 minutes
+    gcTime: 30 * 60 * 1000, // ✅ Keep in cache for 30 minutes
+    refetchOnMount: false,
+  });
+
+  // ✅ Merge results when data is available (only when queries finish loading)
   useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        // Fetch student submissions and group submissions in parallel
-        const [studentResponse, groupResponse] = await Promise.all([
-          fetch("/api/admin/submissions"),
-          fetch("/api/admin/submissions/groups"),
-        ]);
-
-        if (!studentResponse.ok) {
-          const errorData = await studentResponse.json();
-          setError(errorData.message || "Failed to fetch student results");
-          setLoading(false);
-          return;
-        }
-
-        const studentData = await studentResponse.json();
-        console.log("Fetched student results:", studentData);
-
-        // If group response is available, merge group scores
-        if (groupResponse.ok) {
-          const groupData = await groupResponse.json();
-          console.log("Fetched group submissions:", groupData);
-
+    if (!studentLoading && !groupLoading) {
+      if (studentData && groupData) {
+        try {
           // Create a map of group numbers to scores
           const groupScoresMap = new Map<number, number>();
           groupData.submissions?.forEach((submission: any) => {
@@ -66,6 +80,7 @@ export default function StudentResultsPage() {
               student.topic1,
               student.topic2,
               student.topic3,
+              student.topic4,
               groupSubmissionScore,
             ].filter((score): score is number => score !== undefined);
 
@@ -79,22 +94,22 @@ export default function StudentResultsPage() {
           });
 
           setResults(mergedResults);
-        } else {
-          // If group fetch fails, just use student data
-          setResults(studentData);
+          setError(null);
+        } catch (err) {
+          console.error("Error merging results:", err);
+          setError("Failed to merge results");
         }
-      } catch (error) {
-        console.error("Error fetching results:", error);
+      } else if (studentData && !groupData) {
+        // Fallback to just student data if group data fails
+        setResults(studentData);
+        setError(null);
+      } else if (studentError) {
         setError("Failed to load student results");
-      } finally {
-        setLoading(false);
       }
-    };
+    }
+  }, [studentLoading, groupLoading, studentData, groupData, studentError]);
 
-    fetchResults();
-  }, []);
-
-  if (isLoading || loading) {
+  if (isLoading || studentLoading || groupLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
