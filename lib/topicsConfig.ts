@@ -17,23 +17,23 @@ export const MAX_POSSIBLE_SCORE =
 export const TOPICS = [
   {
     id: "topic1",
-    label: "DIRTY DOZEN",
+    label: "Day 1 - Dirty Dozen",
     description: "Learn about the 12 most common aviation errors",
   },
   {
     id: "topic2",
-    label: "Material Factors in Aviation Safety",
+    label: "Day 1 - Material Factors in Aviation Safety",
     description:
       "Understand material factors and their impact on aviation safety",
   },
   {
     id: "topic3",
-    label: "SAFETY MANAGEMENT SYSTEM",
+    label: "Day 1 -Safety Management Systems",
     description: "Master safety management systems and protocols",
   },
   {
     id: "topic4",
-    label: "Airside Safety Hazards",
+    label: "Day 1 -Airside Safety Hazards",
     description: "Identify and mitigate airside safety hazards",
   },
 ];

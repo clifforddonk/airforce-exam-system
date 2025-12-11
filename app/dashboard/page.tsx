@@ -213,7 +213,7 @@ export default function StudentDashboard() {
           {/* Group Assignment */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Group Assignment (Topic 4)
+              Day 2 - Group Assignment
             </h2>
 
             {groupSubmissionsLoading ? (

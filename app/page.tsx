@@ -157,7 +157,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                    Group Project
+                    Day 2 - Group Assignment
                   </h3>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     Collaborate with your team to complete the group project and
