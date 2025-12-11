@@ -68,8 +68,8 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           <Menu className="w-6 h-6 text-gray-700" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Plane className="w-5 h-5 text-white" />
+          <div className="w-8 h-8  rounded-lg flex items-center justify-center">
+            <img src="/logo.png" className="w-8 h-8" />
           </div>
           <span className="font-bold text-gray-800">Admin Portal</span>
         </div>
