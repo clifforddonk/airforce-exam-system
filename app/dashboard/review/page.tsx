@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface ReviewData {
   answers: { [key: string]: number };
@@ -21,18 +22,49 @@ export default function ReviewPage() {
   const searchParams = useSearchParams();
   const topicId = searchParams.get("topic");
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [storedData, setStoredData] = useState<ReviewData | null>(null);
 
+  // ✅ Load stored data once on mount
   useEffect(() => {
     if (topicId) {
       const stored = localStorage.getItem(`quiz_answers_${topicId}`);
       if (stored) {
-        const data = JSON.parse(stored);
-        setReviewData(data);
+        setStoredData(JSON.parse(stored));
       }
-      setLoading(false);
     }
   }, [topicId]);
+
+  // ✅ Use React Query to cache questions with correct answers
+  const { data: questionsWithAnswers, isLoading } = useQuery({
+    queryKey: ["review-questions", topicId],
+    queryFn: async () => {
+      if (!topicId) return null;
+      const res = await fetch(`/api/questions/review?category=${topicId}`);
+      if (!res.ok) throw new Error("Failed to fetch review questions");
+      return res.json();
+    },
+    enabled: !!topicId && !!storedData,
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
+  });
+
+  // ✅ Merge stored data with fresh questions only when both are available
+  useEffect(() => {
+    if (storedData && questionsWithAnswers) {
+      setReviewData({
+        ...storedData,
+        questions: questionsWithAnswers,
+      });
+    } else if (storedData && !isLoading && !questionsWithAnswers) {
+      // Fallback to stored data if API fails
+      setReviewData(storedData);
+    }
+  }, [
+    storedData?.score,
+    storedData?.percentage,
+    questionsWithAnswers,
+    isLoading,
+  ]);
 
   if (!topicId) {
     return (
@@ -51,7 +83,7 @@ export default function ReviewPage() {
     );
   }
 
-  if (loading) {
+  if (isLoading || !storedData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
