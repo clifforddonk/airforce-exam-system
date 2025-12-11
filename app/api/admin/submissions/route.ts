@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import Submission from "@/models/Submission";
+import GroupSubmission from "@/models/GroupSubmission";
 import User from "@/models/User";
 import { verifyToken } from "@/lib/auth";
 import mongoose from "mongoose";
@@ -45,6 +44,19 @@ export async function GET(request: Request) {
 
     console.log(`Found ${users.length} users in database`);
 
+    // ✅ Fetch group submissions and create a map of groupNumber -> score
+    const groupSubmissions = await GroupSubmission.find({
+      score: { $exists: true, $ne: null },
+    }).lean();
+
+    console.log(`Found ${groupSubmissions.length} graded group submissions`);
+
+    // Map groupNumber to score
+    const groupScoreMap = new Map<number, number>();
+    groupSubmissions.forEach((submission: any) => {
+      groupScoreMap.set(submission.groupNumber, submission.score);
+    });
+
     // Group submissions by user
     const resultsByUser: {
       [userId: string]: {
@@ -55,6 +67,7 @@ export async function GET(request: Request) {
         topic1?: number;
         topic2?: number;
         topic3?: number;
+        topic4?: number;
         groupScore?: number;
         submissions: any[];
       };
@@ -77,11 +90,21 @@ export async function GET(request: Request) {
       }
 
       if (!resultsByUser[userIdString]) {
+        // Look up group score if user has a group
+        const groupScore = user.group
+          ? groupScoreMap.get(parseInt(user.group))
+          : undefined;
+
         resultsByUser[userIdString] = {
           userId: userIdString,
           fullName: user.fullName || "Unknown",
           email: user.email || "No email",
           group: user.group || undefined,
+          topic1: undefined,
+          topic2: undefined,
+          topic3: undefined,
+          topic4: undefined,
+          groupScore: groupScore,
           submissions: [],
         };
       }
