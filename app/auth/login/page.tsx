@@ -127,7 +127,7 @@ export default function LoginPage() {
                   type="email"
                   name="email"
                   id="email"
-                  placeholder="your.email@airforce.mil"
+                  placeholder="your.email@example.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
