@@ -3,18 +3,8 @@ import { useCurrentUser } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Users, BookOpen, Trophy, TrendingUp } from "lucide-react";
-import { QUIZ_CONFIG, MAX_POSSIBLE_SCORE } from "@/lib/topicsConfig";
-
-interface StudentSubmission {
-  userId: string;
-  fullName: string;
-  score?: number;
-}
-
-interface GroupSubmissionData {
-  groupNumber: number;
-  score?: number;
-}
+import { QUIZ_CONFIG } from "@/lib/topicsConfig";
+import { useQuery } from "@tanstack/react-query";
 
 interface ScoreDistribution {
   range: string;
@@ -24,7 +14,6 @@ interface ScoreDistribution {
 
 interface PerformanceMetrics {
   averageScore: number;
-  averagePercentage: number;
   highestScore: number;
   lowestScore: number;
   totalScores: number;
@@ -33,7 +22,7 @@ interface PerformanceMetrics {
 }
 
 export default function AdminDashboard() {
-  const { isLoading } = useCurrentUser();
+  const { isLoading: userLoading } = useCurrentUser();
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalGroups: 0,
@@ -44,71 +33,65 @@ export default function AdminDashboard() {
   >([]);
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     averageScore: 0,
-    averagePercentage: 0,
     highestScore: 0,
     lowestScore: 0,
     totalScores: 0,
     completionRate: 0,
     topPerformer: null,
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
+  // ✅ Fetch student submissions with React Query caching
+  const { data: studentData, isLoading: studentLoading } = useQuery({
+    queryKey: ["admin-submissions"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/submissions");
+      if (!response.ok) throw new Error("Failed to fetch submissions");
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: true, // ✅ Refetch when admin returns to tab
+  });
+
+  // ✅ Fetch group submissions with React Query caching
+  const { data: groupData, isLoading: groupLoading } = useQuery({
+    queryKey: ["admin-group-submissions"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/submissions/groups");
+      if (!response.ok) throw new Error("Failed to fetch group submissions");
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: true, // ✅ Refetch when admin returns to tab
+  });
+
+  // ✅ Calculate metrics when data is available
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    if (!studentLoading && !groupLoading && studentData && groupData) {
       try {
-        setLoading(true);
-        setError(null);
+        // ✅ SIMPLIFIED: studentData is already aggregated StudentResult[] with total field!
+        // The /api/admin/submissions endpoint already calculates totals, so just use them directly
 
-        // Fetch student submissions
-        const submissionsResponse = await fetch("/api/admin/submissions");
-        if (!submissionsResponse.ok)
-          throw new Error("Failed to fetch submissions");
-        const submissions =
-          (await submissionsResponse.json()) as StudentSubmission[];
-
-        // Fetch group submissions
-        const groupsResponse = await fetch("/api/admin/submissions/groups");
-        if (!groupsResponse.ok)
-          throw new Error("Failed to fetch group submissions");
-        const groupSubmissions = await groupsResponse.json();
-
-        // Calculate stats
-        const uniqueStudents = new Set(
-          submissions.map((sub: StudentSubmission) => sub.userId)
-        ).size;
+        const uniqueStudents = studentData.length;
         const uniqueGroups = new Set(
-          ((groupSubmissions.submissions as GroupSubmissionData[]) || []).map(
-            (sub: GroupSubmissionData) => sub.groupNumber
-          )
+          (groupData.submissions || []).map((sub) => sub.groupNumber)
         ).size;
 
-        // Collect all scores (normalized to 0-100 scale)
-        const allScores: number[] = [];
-        submissions.forEach((sub: StudentSubmission) => {
-          if (sub.score !== undefined && sub.score !== null) {
-            // Normalize: (score / maxPossible) * 100
-            const normalizedScore = (sub.score / MAX_POSSIBLE_SCORE) * 100;
-            allScores.push(normalizedScore);
-          }
-        });
-        ((groupSubmissions.submissions as GroupSubmissionData[]) || []).forEach(
-          (sub: GroupSubmissionData) => {
-            if (sub.score !== undefined && sub.score !== null) {
-              // Normalize: (score / maxPossible) * 100
-              const normalizedScore = (sub.score / MAX_POSSIBLE_SCORE) * 100;
-              allScores.push(normalizedScore);
-            }
-          }
-        );
+        // ✅ Collect student scores - just use the pre-calculated totals from API
+        const allScores: number[] = studentData
+          .filter((result) => result.total > 0) // Only students with at least one submission
+          .map((result) => result.total);
 
-        // Calculate score distribution (in percentage buckets)
+        // Calculate score distribution (in percentage buckets 0-100)
         const distribution: ScoreDistribution[] = [
-          { range: "0-20%", count: 0, percentage: 0 },
-          { range: "21-40%", count: 0, percentage: 0 },
-          { range: "41-60%", count: 0, percentage: 0 },
-          { range: "61-80%", count: 0, percentage: 0 },
-          { range: "81-100%", count: 0, percentage: 0 },
+          { range: "0-20", count: 0, percentage: 0 },
+          { range: "21-40", count: 0, percentage: 0 },
+          { range: "41-60", count: 0, percentage: 0 },
+          { range: "61-80", count: 0, percentage: 0 },
+          { range: "81-100", count: 0, percentage: 0 },
         ];
 
         allScores.forEach((score) => {
@@ -125,7 +108,7 @@ export default function AdminDashboard() {
           d.percentage = total > 0 ? Math.round((d.count / total) * 100) : 0;
         });
 
-        // Calculate performance metrics (all in percentage)
+        // Calculate performance metrics
         const averageScore =
           allScores.length > 0
             ? Math.round(
@@ -135,50 +118,51 @@ export default function AdminDashboard() {
         const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
         const lowestScore = allScores.length > 0 ? Math.min(...allScores) : 0;
 
-        // Find top performer
+        // Find top performer (including groups)
         let topPerformer = null;
         let maxScore = -1;
-        submissions.forEach((sub: StudentSubmission) => {
-          if (
-            sub.score !== undefined &&
-            sub.score !== null &&
-            sub.score > maxScore
-          ) {
-            maxScore = sub.score;
-            const percentage = (sub.score / MAX_POSSIBLE_SCORE) * 100;
+
+        // Check student results for top performer
+        studentData.forEach((result) => {
+          if (result.total > maxScore) {
+            maxScore = result.total;
             topPerformer = {
-              name: sub.fullName || "Unknown",
-              score: Math.round(sub.score),
-              percentage: Math.round(percentage),
+              name: result.fullName || "Unknown",
+              score: Math.round(result.total),
+              percentage: Math.round(result.total),
             };
           }
         });
-        ((groupSubmissions.submissions as GroupSubmissionData[]) || []).forEach(
-          (sub: GroupSubmissionData) => {
-            if (
-              sub.score !== undefined &&
-              sub.score !== null &&
-              sub.score > maxScore
-            ) {
-              maxScore = sub.score;
-              const percentage = (sub.score / MAX_POSSIBLE_SCORE) * 100;
-              topPerformer = {
-                name: `Group ${sub.groupNumber}`,
-                score: Math.round(sub.score),
-                percentage: Math.round(percentage),
-              };
-            }
-          }
-        );
 
-        // Calculate completion rate
+        // ✅ Also check group scores for top performer
+        (groupData.submissions || []).forEach((submission) => {
+          if (
+            submission.score !== undefined &&
+            submission.score !== null &&
+            submission.score > maxScore
+          ) {
+            maxScore = submission.score;
+            topPerformer = {
+              name: `Group ${submission.groupNumber}`,
+              score: Math.round(submission.score),
+              percentage: Math.round(submission.score),
+            };
+          }
+        });
+
+        // Calculate completion rate - count how many students have completed at least one quiz
+        const studentsWithSubmissions = studentData.filter(
+          (result) =>
+            (result.topic1 || 0) +
+              (result.topic2 || 0) +
+              (result.topic3 || 0) +
+              (result.topic4 || 0) >
+            0
+        ).length;
+
         const completionRate =
           uniqueStudents > 0
-            ? Math.round(
-                (submissions.length /
-                  (uniqueStudents * QUIZ_CONFIG.totalQuizzes)) *
-                  100
-              )
+            ? Math.round((studentsWithSubmissions / uniqueStudents) * 100)
             : 0;
 
         setStats({
@@ -190,7 +174,6 @@ export default function AdminDashboard() {
         setScoreDistribution(distribution);
         setMetrics({
           averageScore,
-          averagePercentage: averageScore,
           highestScore,
           lowestScore,
           totalScores: total,
@@ -198,17 +181,12 @@ export default function AdminDashboard() {
           topPerformer,
         });
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        setError(err instanceof Error ? err.message : "Failed to load data");
-      } finally {
-        setLoading(false);
+        console.error("Error calculating metrics:", err);
       }
-    };
+    }
+  }, [studentLoading, groupLoading, studentData, groupData]);
 
-    fetchDashboardData();
-  }, []);
-
-  if (isLoading || loading) {
+  if (userLoading || studentLoading || groupLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -225,12 +203,6 @@ export default function AdminDashboard() {
           Track system-wide performance and student progress
         </p>
       </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-red-800">
-          {error}
-        </div>
-      )}
 
       {/* Key Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-8">
@@ -326,7 +298,7 @@ export default function AdminDashboard() {
                   Average Score
                 </p>
                 <p className="text-2xl font-bold text-gray-800 mt-1">
-                  {metrics.averagePercentage}%
+                  {metrics.averageScore}/100
                 </p>
               </div>
               <TrendingUp className="w-5 h-5 text-blue-600 flex-shrink-0" />
@@ -339,7 +311,7 @@ export default function AdminDashboard() {
                   Highest Score
                 </p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
-                  {Math.round(metrics.highestScore)}%
+                  {Math.round(metrics.highestScore)}/100
                 </p>
               </div>
               <Trophy className="w-5 h-5 text-green-600 flex-shrink-0" />
