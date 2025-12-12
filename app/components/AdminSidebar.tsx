@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   BookOpen,
   HelpCircle,
-  BarChart3,
   Users,
   LogOut,
   Menu,

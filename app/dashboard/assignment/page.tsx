@@ -67,7 +67,7 @@ export default function GroupAssignmentPage() {
 
       // Simulate progress for better UX
       const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
+        setUploadProgress((prev: number) => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
