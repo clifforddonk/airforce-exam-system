@@ -77,7 +77,7 @@ export default function AdminDashboard() {
 
         const uniqueStudents = studentData.length;
         const uniqueGroups = new Set(
-          (groupData.submissions || []).map((sub) => sub.groupNumber)
+          (groupData.submissions || []).map((sub: any) => sub.groupNumber)
         ).size;
 
         // ✅ Collect student scores - just use the pre-calculated totals from API
