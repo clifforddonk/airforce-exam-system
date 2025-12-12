@@ -204,11 +204,7 @@ export default function StudentResultsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Link href="/admin">
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <ArrowLeft className="w-6 h-6 text-gray-700" />
-            </button>
-          </Link>
+          
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
               Admin Dashboard
