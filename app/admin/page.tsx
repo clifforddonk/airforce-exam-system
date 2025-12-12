@@ -21,6 +21,32 @@ interface PerformanceMetrics {
   topPerformer: { name: string; score: number; percentage: number } | null;
 }
 
+// Add these type definitions at the top
+interface StudentResult {
+  userId: string;
+  fullName: string;
+  email: string;
+  group?: string;
+  topic1?: number;
+  topic2?: number;
+  topic3?: number;
+  topic4?: number;
+  total: number;
+}
+
+interface GroupSubmission {
+  id: string;
+  groupNumber: number;
+  score: number | null;
+  uploadedBy: {
+    fullName: string;
+  };
+}
+
+interface GroupSubmissionsResponse {
+  submissions: GroupSubmission[];
+}
+
 export default function AdminDashboard() {
   const { isLoading: userLoading } = useCurrentUser();
   const [stats, setStats] = useState({
@@ -41,51 +67,48 @@ export default function AdminDashboard() {
   });
 
   // ✅ Fetch student submissions with React Query caching
-  const { data: studentData, isLoading: studentLoading } = useQuery({
+  const { data: studentData, isLoading: studentLoading } = useQuery<StudentResult[]>({
     queryKey: ["admin-submissions"],
     queryFn: async () => {
       const response = await fetch("/api/admin/submissions");
       if (!response.ok) throw new Error("Failed to fetch submissions");
       return response.json();
     },
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     refetchOnMount: false,
-    refetchOnWindowFocus: true, // ✅ Refetch when admin returns to tab
+    refetchOnWindowFocus: true,
   });
 
   // ✅ Fetch group submissions with React Query caching
-  const { data: groupData, isLoading: groupLoading } = useQuery({
+  const { data: groupData, isLoading: groupLoading } = useQuery<GroupSubmissionsResponse>({
     queryKey: ["admin-group-submissions"],
     queryFn: async () => {
       const response = await fetch("/api/admin/submissions/groups");
       if (!response.ok) throw new Error("Failed to fetch group submissions");
       return response.json();
     },
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     refetchOnMount: false,
-    refetchOnWindowFocus: true, // ✅ Refetch when admin returns to tab
+    refetchOnWindowFocus: true,
   });
 
   // ✅ Calculate metrics when data is available
   useEffect(() => {
     if (!studentLoading && !groupLoading && studentData && groupData) {
       try {
-        // ✅ SIMPLIFIED: studentData is already aggregated StudentResult[] with total field!
-        // The /api/admin/submissions endpoint already calculates totals, so just use them directly
-
         const uniqueStudents = studentData.length;
         const uniqueGroups = new Set(
-          (groupData.submissions || []).map((sub: any) => sub.groupNumber)
+          (groupData.submissions || []).map((sub) => sub.groupNumber)
         ).size;
 
-        // ✅ Collect student scores - just use the pre-calculated totals from API
+        // ✅ Collect student scores
         const allScores: number[] = studentData
-          .filter((result) => result.total > 0) // Only students with at least one submission
+          .filter((result) => result.total > 0)
           .map((result) => result.total);
 
-        // Calculate score distribution (in percentage buckets 0-100)
+        // Calculate score distribution
         const distribution: ScoreDistribution[] = [
           { range: "0-20", count: 0, percentage: 0 },
           { range: "21-40", count: 0, percentage: 0 },
@@ -118,11 +141,11 @@ export default function AdminDashboard() {
         const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
         const lowestScore = allScores.length > 0 ? Math.min(...allScores) : 0;
 
-        // Find top performer (including groups)
+        // Find top performer
         let topPerformer = null;
         let maxScore = -1;
 
-        // Check student results for top performer
+        // Check student results
         studentData.forEach((result) => {
           if (result.total > maxScore) {
             maxScore = result.total;
@@ -134,7 +157,7 @@ export default function AdminDashboard() {
           }
         });
 
-        // ✅ Also check group scores for top performer
+        // Check group scores
         (groupData.submissions || []).forEach((submission) => {
           if (
             submission.score !== undefined &&
@@ -150,7 +173,7 @@ export default function AdminDashboard() {
           }
         });
 
-        // Calculate completion rate - count how many students have completed at least one quiz
+        // Calculate completion rate
         const studentsWithSubmissions = studentData.filter(
           (result) =>
             (result.topic1 || 0) +
@@ -206,7 +229,6 @@ export default function AdminDashboard() {
 
       {/* Key Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-8">
-        {/* Total Students */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-gray-600 font-medium">Total Students</h3>
@@ -218,7 +240,6 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-500">Active participants</p>
         </div>
 
-        {/* Total Quizzes */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-gray-600 font-medium">Total Quizzes</h3>
@@ -230,7 +251,6 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-500">Quiz topics available</p>
         </div>
 
-        {/* Total Groups */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-gray-600 font-medium">Total Groups</h3>
@@ -245,7 +265,6 @@ export default function AdminDashboard() {
 
       {/* Score Distribution & Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Score Distribution Chart */}
         <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold text-gray-800 mb-6">
             Score Distribution
@@ -287,11 +306,9 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Key Metrics */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Key Metrics</h2>
           <div className="space-y-4">
-            {/* Average Score */}
             <div className="flex items-start justify-between pb-4 border-b border-gray-200">
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase">
@@ -304,7 +321,6 @@ export default function AdminDashboard() {
               <TrendingUp className="w-5 h-5 text-blue-600 flex-shrink-0" />
             </div>
 
-            {/* Highest Score */}
             <div className="flex items-start justify-between pb-4 border-b border-gray-200">
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase">
@@ -316,38 +332,6 @@ export default function AdminDashboard() {
               </div>
               <Trophy className="w-5 h-5 text-green-600 flex-shrink-0" />
             </div>
-
-            {/* Completion Rate */}
-            {/* <div className="flex items-start justify-between pb-4 border-b border-gray-200">
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase">
-                  Completion Rate
-                </p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">
-                  {metrics.completionRate}%
-                </p>
-              </div>
-            </div> */}
-
-            {/* Top Performer */}
-            {/* <div className="pt-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                Top Performer
-              </p>
-              {metrics.topPerformer ? (
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
-                  <p className="font-semibold text-gray-800 text-sm">
-                    {metrics.topPerformer.name}
-                  </p>
-                  <p className="text-lg font-bold text-blue-600">
-                    {metrics.topPerformer.percentage}% (
-                    {metrics.topPerformer.score} pts)
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No submissions yet</p>
-              )}
-            </div> */}
           </div>
         </div>
       </div>
