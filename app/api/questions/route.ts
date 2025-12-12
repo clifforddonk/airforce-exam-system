@@ -36,17 +36,26 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    
+
     // Get category from query params
     const { searchParams } = new URL(req.url);
-    const category = searchParams.get('category');
-    
+    const category = searchParams.get("category");
+
     // Build filter - if category provided, filter by it
     const filter = category ? { category } : {};
-    
+
     const questions = await Question.find(filter).sort({ createdAt: -1 });
-    
-    return NextResponse.json(questions, { status: 200 });
+
+    // ✅ SECURITY: Remove correctAnswer before sending to frontend
+    const safeQuestions = questions.map((q) => ({
+      _id: q._id,
+      question: q.question,
+      options: q.options,
+      category: q.category,
+      // ❌ correctAnswer is NOT included
+    }));
+
+    return NextResponse.json(safeQuestions, { status: 200 });
   } catch (error) {
     console.error("Get questions error:", error);
     return NextResponse.json(

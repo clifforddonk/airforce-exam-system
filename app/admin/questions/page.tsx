@@ -9,13 +9,7 @@ import {
   useDeleteQuestion,
   type Question,
 } from "@/hooks/useQuestions";
-
-// Hardcoded topics
-const TOPICS = [
-  { id: "topic1", label: "Topic 1 – Airforce History & Protocol" },
-  { id: "topic2", label: "Topic 2 – Aircraft Systems" },
-  { id: "topic3", label: "Topic 3 – Flight Operations" },
-];
+import { TOPICS } from "@/lib/topicsConfig";
 
 // Local question type (without _id for new questions)
 type LocalQuestion = Omit<Question, "_id" | "category"> & {
@@ -275,7 +269,7 @@ export default function AdminQuestionsPage() {
                     setFormData({ ...formData, question: e.target.value })
                   }
                   placeholder="Enter your question"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                  className="w-full px-4 py-2 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                 />
               </div>
 
@@ -292,7 +286,7 @@ export default function AdminQuestionsPage() {
                       setFormData({ ...formData, option1: e.target.value })
                     }
                     placeholder="First option"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                    className="w-full px-4 py-2  text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
                 <div>
@@ -306,7 +300,7 @@ export default function AdminQuestionsPage() {
                       setFormData({ ...formData, option2: e.target.value })
                     }
                     placeholder="Second option"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                    className="w-full px-4 py-2 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
                 <div>
@@ -320,7 +314,7 @@ export default function AdminQuestionsPage() {
                       setFormData({ ...formData, option3: e.target.value })
                     }
                     placeholder="Third option (optional)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
                 <div>
@@ -334,7 +328,7 @@ export default function AdminQuestionsPage() {
                       setFormData({ ...formData, option4: e.target.value })
                     }
                     placeholder="Fourth option (optional)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
               </div>
@@ -352,7 +346,7 @@ export default function AdminQuestionsPage() {
                       correctAnswer: parseInt(e.target.value),
                     })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value={0}>Option 1</option>
                   <option value={1}>Option 2</option>

@@ -1,13 +1,33 @@
+# Phase 3: Frontend Integration Code
+
+## File: app/dashboard/quiz/page.tsx
+
+Replace the entire file with this updated version that integrates Phase 2:
+
+```typescript
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, AlertCircle, Clock } from "lucide-react";
 import Link from "next/link";
-import { useQueryClient } from "@tanstack/react-query";
-import { TOPICS, QUIZ_CONFIG } from "@/lib/topicsConfig";
 
-const QUIZ_DURATION = QUIZ_CONFIG.quizDurationSeconds; // 10 minutes in seconds
+const TOPICS = [
+  {
+    id: "topic1",
+    label: "Airforce Basics",
+  },
+  {
+    id: "topic2",
+    label: "Aircraft Knowledge",
+  },
+  {
+    id: "topic3",
+    label: "Flight Procedures",
+  },
+];
+
+const QUIZ_DURATION = 30 * 60; // 30 minutes in seconds
 
 interface Question {
   _id: string;
@@ -26,9 +46,9 @@ interface QuizSession {
 }
 
 export default function SecureQuizPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const topicParam = searchParams.get("topic");
-  const queryClient = useQueryClient();
 
   const [selectedTopic, setSelectedTopic] = useState<(typeof TOPICS)[0] | null>(
     null
@@ -41,15 +61,9 @@ export default function SecureQuizPage() {
     score: string;
     percentage: number;
   } | null>(null);
-  const [reviewMode, setReviewMode] = useState(false);
-  const [reviewData, setReviewData] = useState<{
-    answers: { [key: string]: number };
-    questions: Question[];
-    score: number;
-    percentage: number;
-  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [showReview, setShowReview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [showTabWarning, setShowTabWarning] = useState(false);
@@ -108,7 +122,6 @@ export default function SecureQuizPage() {
     };
 
     checkCompletion();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicParam]);
 
   // ✅ NEW: Start quiz session on backend
@@ -242,7 +255,6 @@ export default function SecureQuizPage() {
       handleSubmit();
     }
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, quizCompleted, selectedTopic]);
 
   // ✅ NEW: Tab visibility detection with violation reporting
@@ -362,36 +374,19 @@ export default function SecureQuizPage() {
         const result = await response.json();
 
         // ✅ Use server-calculated score
-        const serverScore = result.submission.score; // Now in 20-point scale
-        const serverTotal = 20; // Maximum points per quiz
+        const serverScore = result.submission.score;
+        const serverTotal = result.submission.totalQuestions;
         const serverPercentage = result.submission.percentage;
         const finalScore = `${serverScore}/${serverTotal}`;
 
         // Mark quiz as completed
         localStorage.setItem(`quiz_completed_${selectedTopic.id}`, "true");
 
-        // ✅ NEW: Set flag for dashboard to refetch
-        localStorage.setItem("quiz_just_submitted", "true");
-
         // Clear session
         localStorage.removeItem(`quiz_session_${selectedTopic.id}`);
 
         setScoreData({ score: finalScore, percentage: serverPercentage });
         setQuizCompleted(true);
-
-        // ✅ Store answers for review
-        localStorage.setItem(
-          `quiz_answers_${selectedTopic.id}`,
-          JSON.stringify({
-            answers: userAnswers,
-            questions: questionsData || questions,
-            score: serverScore,
-            percentage: serverPercentage,
-          })
-        );
-
-        // ✅ NEW: Immediately refetch submissions (force all instances to update)
-        await queryClient.refetchQueries({ queryKey: ["submissions"] });
 
         console.log("✅ Quiz submitted - Score from backend:", finalScore);
       } else {
@@ -418,7 +413,6 @@ export default function SecureQuizPage() {
       .padStart(2, "0")}`;
   };
 
-  // Quiz locked screen
   if (quizLocked) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 lg:p-8 flex items-center justify-center">
@@ -440,13 +434,27 @@ export default function SecureQuizPage() {
     );
   }
 
-  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading quiz...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedTopic || questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 lg:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Unable to load quiz</p>
+          <Link href="/dashboard">
+            <button className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg">
+              Return to Dashboard
+            </button>
+          </Link>
         </div>
       </div>
     );
@@ -475,13 +483,11 @@ export default function SecureQuizPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 justify-center">
-                <Link href="/dashboard">
-                  <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">
-                    Return to Dashboard
-                  </button>
-                </Link>
-              </div>
+              <Link href="/dashboard">
+                <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">
+                  Return to Dashboard
+                </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -600,3 +606,31 @@ export default function SecureQuizPage() {
     </div>
   );
 }
+```
+
+## Key Changes Summary
+
+| What                 | Before              | After                       |
+| -------------------- | ------------------- | --------------------------- |
+| Session management   | localStorage only   | Backend session token       |
+| Completion check     | localStorage flag   | API check to database       |
+| Violation reporting  | logged locally      | Sent to backend database    |
+| Score calculation    | Frontend calculates | Backend calculates          |
+| Retake protection    | Frontend check      | API blocks requests         |
+| Data sent to backend | answers + score     | answers + sessionToken only |
+
+## How to Apply This Update
+
+1. Replace the entire `app/dashboard/quiz/page.tsx` with the code above
+2. Run `npm run dev` to test locally
+3. The quiz will now use all Phase 2 security features
+
+## Testing the Integration
+
+1. Go to `/dashboard`
+2. Click "Start Quiz"
+3. Open DevTools → Network tab
+4. Watch the POST to `/api/quiz/start` - you'll see sessionToken returned
+5. Switch tabs a few times - watch the `/api/quiz/violations` POST requests
+6. Complete the quiz - the score will come from backend in the response
+7. Try to retake - you'll get 403 (forbidden) from backend

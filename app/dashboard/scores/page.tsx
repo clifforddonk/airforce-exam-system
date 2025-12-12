@@ -1,14 +1,29 @@
 "use client";
 import { useCurrentUser } from "@/hooks/useAuth";
-import { useSubmissions } from "@/hooks/useSubmissions";
+import { useSubmissionsWithRefetch } from "@/hooks/useSubmissionsWithRefetch";
 import { useGroupSubmissions } from "@/hooks/useGroupSubmission";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Calendar, Award, Users } from "lucide-react";
 
 export default function MyScoresPage() {
+  const queryClient = useQueryClient();
   const { data: user, isLoading } = useCurrentUser();
   const { data: submissions = [], isLoading: submissionsLoading } =
-    useSubmissions();
+    useSubmissionsWithRefetch();
+
+  // ✅ NEW: Check if quiz was just submitted and refetch
+  useEffect(() => {
+    const justSubmitted = localStorage.getItem("quiz_just_submitted");
+    if (justSubmitted === "true") {
+      console.log(
+        "✅ Scores page detected quiz submission - refetching submissions..."
+      );
+      queryClient.refetchQueries({ queryKey: ["submissions"] });
+      localStorage.removeItem("quiz_just_submitted");
+    }
+  }, [queryClient]);
 
   const { data: groupSubmissionsData, isLoading: groupLoading } =
     useGroupSubmissions(undefined, user?.group);
@@ -150,9 +165,7 @@ export default function MyScoresPage() {
                         <span className="font-semibold text-blue-600">
                           {submission.score}
                         </span>
-                        <span className="text-gray-700">
-                          /{submission.totalQuestions}
-                        </span>
+                        <span className="text-gray-700">/20</span>
                       </td>
                       <td className="py-4 px-4 text-gray-900 font-medium">
                         {formatTime(submission.timeSpent)}

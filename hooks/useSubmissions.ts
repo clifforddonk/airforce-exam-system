@@ -22,8 +22,9 @@ export const useSubmissions = () => {
       if (!response.ok) throw new Error("Failed to fetch submissions");
       return response.json();
     },
-    staleTime: 0, // Always consider data stale, refetch on mount
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnMount: true, // Always refetch when component mounts
+    staleTime: 5 * 60 * 1000, // ✅ Data fresh for 5 minutes
+    gcTime: 15 * 60 * 1000, // ✅ Garbage collect after 15 minutes
+    refetchOnMount: false, // ✅ Don't refetch on mount (reuse cache)
+    refetchOnWindowFocus: true, // ✅ Refetch when user returns to tab
   });
 };

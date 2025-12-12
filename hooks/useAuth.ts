@@ -1,5 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+export interface User {
+  _id?: string;
+  fullName: string;
+  email: string;
+  role: "student" | "admin";
+  group: number;
+}
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface SignupData {
+  fullName: string;
+  email: string;
+  password: string;
+  group: number;
+}
+
 export const useCurrentUser = () => {
   return useQuery({
     queryKey: ["currentUser"],
@@ -13,14 +33,18 @@ export const useCurrentUser = () => {
         return null;
       }
       const data = await res.json();
-      return data.user;
+      return data.user as User;
     },
+    staleTime: 10 * 60 * 1000, // ✅ User data fresh for 10 minutes
+    gcTime: 30 * 60 * 1000, // ✅ Keep in cache 30 minutes
+    refetchOnMount: false, // ✅ Don't refetch on mount
+    refetchOnWindowFocus: "always", // ✅ Refetch when tab focus changes
   });
 };
 
 export const useLogin = () => {
   return useMutation({
-    mutationFn: async (credentials: any) => {
+    mutationFn: async (credentials: LoginCredentials) => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
@@ -36,7 +60,7 @@ export const useLogin = () => {
 
 export const useSignup = () => {
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: SignupData) => {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         body: JSON.stringify(data),

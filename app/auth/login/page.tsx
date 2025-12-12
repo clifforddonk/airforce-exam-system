@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, CheckCircle, X } from "lucide-react";
-import AnimatedPlane from "../../components/Animatedplane";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -45,7 +45,7 @@ export default function LoginPage() {
       // Redirect based on user role
       const redirectPath =
         response.user?.role === "admin" ? "/admin" : "/dashboard";
-      setMessage(`Login successful! Redirecting to Dashboard...`);
+      setMessage(`Login successful! Redirecting...`);
 
       setTimeout(() => {
         router.push(redirectPath);
@@ -57,21 +57,43 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f172a] to-[#1e293b] flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        {/* Animated Plane */}
-        <div className="mb-8">
-          <AnimatedPlane />
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+      {/* Left Side - Image & Branding (Desktop Only) */}
+      <div className="relative w-full lg:w-1/2 hidden lg:flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="/airplane.jpg"
+            alt="Airforce Aircraft"
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Dark overlay to make image darker */}
+          <div className="absolute inset-0 bg-black opacity-50"></div>
         </div>
+      </div>
 
-        {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-10">
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center min-h-screen">
+        <div className="w-full max-w-md px-6 py-8">
           {/* Title */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
-              Welcome Back
+            <div className="relative flex gap-4 items-center justify-center mb-6">
+              <Image
+                src="/logo.png"
+                alt="Airforce Logo"
+                width={150}
+                height={150}
+                className="drop-shadow-xl w-20 h-18"
+              />
+            </div>
+
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
+              Log Into Your Account
             </h2>
-            <p className="text-gray-600">Log in to continue your training</p>
+            <p className="text-sm lg:text-base text-gray-600">
+              Welcome back to Airforce Training
+            </p>
           </div>
 
           {/* Status Messages */}
@@ -88,9 +110,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Login Form */}
+          {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email */}
             <div>
               <label
                 htmlFor="email"
@@ -106,7 +127,7 @@ export default function LoginPage() {
                   type="email"
                   name="email"
                   id="email"
-                  placeholder="your.email@airforce.mil"
+                  placeholder="your.email@example.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -115,7 +136,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label
                 htmlFor="password"
@@ -151,29 +171,10 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-600"
-                >
-                  Remember me
-                </label>
-              </div>
-            </div>
-
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={login.isPending}
-              className="w-full flex justify-center items-center py-3 px-4 rounded-lg text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full flex justify-center items-center py-3 px-4 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {login.isPending ? (
                 <>
@@ -200,12 +201,19 @@ export default function LoginPage() {
                   Signing in...
                 </>
               ) : (
-                "Sign In"
+                "Log In"
               )}
             </button>
           </form>
 
-          {/* Divider */}
+          <div className="mt-6 text-center">
+            <Link href="/forgot-password">
+              <p className="text-sm text-blue-600 hover:underline cursor-pointer">
+                Forgot your password?
+              </p>
+            </Link>
+          </div>
+
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-center text-sm text-gray-600">
               Don't have an account?{" "}
@@ -213,16 +221,11 @@ export default function LoginPage() {
                 href="/auth/signup"
                 className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
               >
-                Create one here
+                Sign Up
               </Link>
             </p>
           </div>
         </div>
-
-        {/* Footer Note */}
-        <p className="text-center text-gray-500 text-sm mt-6">
-          Secure login for Airforce personnel
-        </p>
       </div>
     </div>
   );

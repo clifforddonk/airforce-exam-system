@@ -1,34 +1,39 @@
 "use client";
 import { useCurrentUser } from "@/hooks/useAuth";
-import { useSubmissions } from "@/hooks/useSubmissions";
+import { useSubmissionsWithRefetch } from "@/hooks/useSubmissionsWithRefetch";
 import { useGroupSubmissions } from "../../hooks/useGroupSubmission";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  LayoutDashboard,
   BookOpen,
   Trophy,
   Upload,
-  LogOut,
-  Menu,
-  X,
   Users,
   FileText,
-  Award,
   Plane,
   Download,
   CheckCircle,
 } from "lucide-react";
-
-const TOPICS = [
-  { id: "topic1", label: "Topic 1 – Airforce History & Protocol" },
-  { id: "topic2", label: "Topic 2 – Aircraft Systems" },
-  { id: "topic3", label: "Topic 3 – Flight Operations" },
-];
+import { TOPICS } from "@/lib/topicsConfig";
 
 export default function StudentDashboard() {
+  const queryClient = useQueryClient();
   const { data: user, isLoading } = useCurrentUser();
   const { data: submissions = [], isLoading: submissionsLoading } =
-    useSubmissions();
+    useSubmissionsWithRefetch();
+
+  // ✅ NEW: Check if quiz was just submitted and refetch
+  useEffect(() => {
+    const justSubmitted = localStorage.getItem("quiz_just_submitted");
+    if (justSubmitted === "true") {
+      console.log(
+        "✅ Dashboard detected quiz submission - refetching submissions..."
+      );
+      queryClient.refetchQueries({ queryKey: ["submissions"] });
+      localStorage.removeItem("quiz_just_submitted");
+    }
+  }, [queryClient]);
 
   // Fetch group submissions for the student's group
   const { data: groupSubmissionsData, isLoading: groupSubmissionsLoading } =
@@ -46,9 +51,6 @@ export default function StudentDashboard() {
   const getSubmissionForTopic = (topicId: string) => {
     return submissions.find((s) => s.topicId === topicId);
   };
-
-  // Get latest submission
-  const latestSubmission = submissions.length > 0 ? submissions[0] : null;
 
   // Calculate completed quizzes
   const completedCount = submissions.length;
@@ -161,8 +163,10 @@ export default function StudentDashboard() {
                     <BookOpen className="w-6 h-6 text-blue-600" />
                   ) : topic.id === "topic2" ? (
                     <Plane className="w-6 h-6 text-blue-600" />
-                  ) : (
+                  ) : topic.id === "topic3" ? (
                     <Trophy className="w-6 h-6 text-blue-600" />
+                  ) : (
+                    <Upload className="w-6 h-6 text-blue-600" />
                   );
 
                 return (
@@ -180,21 +184,16 @@ export default function StudentDashboard() {
                         </h3>
                         {submission ? (
                           <div>
-                            <button
-                              disabled
-                              className="w-full bg-gray-200 text-gray-600 px-4 py-2 rounded-lg font-medium cursor-not-allowed"
-                            >
-                              Quiz Already Taken
-                            </button>
+                            <Link href={`/dashboard/review?topic=${topic.id}`}>
+                              <button className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors">
+                                Quiz Taken. Review Answers
+                              </button>
+                            </Link>
                           </div>
                         ) : (
                           <>
                             <p className="text-sm text-gray-600 mb-3">
-                              {topic.id === "topic1"
-                                ? "Test your knowledge of Airforce history, rank structure, and military protocol."
-                                : topic.id === "topic2"
-                                ? "Understand aircraft mechanics and systems"
-                                : "Master flight procedures and safety"}
+                              {topic.description}
                             </p>
                             <Link href={`/dashboard/quiz?topic=${topic.id}`}>
                               <button className="w-full bg-[#0f172a] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#1e293b] transition-colors">
@@ -214,7 +213,7 @@ export default function StudentDashboard() {
           {/* Group Assignment */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Group Assignment (Topic 4)
+              Day 2 - Group Assignment
             </h2>
 
             {groupSubmissionsLoading ? (
@@ -291,7 +290,7 @@ export default function StudentDashboard() {
                   Group Project Submission
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Upload your team's assignment for Group {user?.group}
+                  Upload your team&apos;s assignment for Group {user?.group}
                 </p>
                 <p className="text-xs text-gray-500 mb-6">
                   Click to upload PDF file
