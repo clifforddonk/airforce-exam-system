@@ -120,8 +120,8 @@ export default function StudentSidebar({ onLogout }: StudentSidebarProps) {
         {/* Logo */}
         <div className="p-6 border-b border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Plane className="w-6 h-6" />
+            <div className="w-8 h-8  rounded-lg flex items-center justify-center">
+              <img src="/logo.png" className="w-8 h-8" />
             </div>
             <span className="text-lg font-bold">Student Portal</span>
           </div>
