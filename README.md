@@ -5,6 +5,7 @@ A comprehensive **Learning Management System (LMS)** built for aviation safety t
 ## 🚀 Features
 
 ### For Students
+
 - **Interactive Quizzes**: 4 aviation safety topics with timed quizzes (10 minutes each)
 - **Quiz Scoring**: Real-time feedback with score breakdowns and percentages
 - **Review Mode**: Compare your answers with correct answers and explanations
@@ -13,6 +14,7 @@ A comprehensive **Learning Management System (LMS)** built for aviation safety t
 - **Responsive Dashboard**: Track progress and upcoming assignments
 
 ### For Admins
+
 - **Question Management**: Create, edit, and delete quiz questions by topic
 - **Bulk Import**: Upload multiple questions via CSV/JSON (extensible)
 - **Student Results**: View aggregated performance data with export functionality
@@ -21,6 +23,7 @@ A comprehensive **Learning Management System (LMS)** built for aviation safety t
 - **User Management**: Manage students and admin accounts
 
 ### Security & Performance
+
 - ✅ **Server-Side Scoring**: Prevents client-side tampering
 - ✅ **JWT Authentication**: Secure token-based auth with HTTPOnly cookies
 - ✅ **Role-Based Access**: Student vs Admin route protection
@@ -30,15 +33,16 @@ A comprehensive **Learning Management System (LMS)** built for aviation safety t
 
 ## 📊 Scoring System
 
-| Component | Points | Details |
-|-----------|--------|---------|
-| Individual Quizzes | 80 | 4 topics × 20 points (10 questions × 2 pts each) |
-| Group Assignment | 20 | Graded by admin |
-| **Total** | **100** | Max possible score |
+| Component          | Points  | Details                                          |
+| ------------------ | ------- | ------------------------------------------------ |
+| Individual Quizzes | 80      | 4 topics × 20 points (10 questions × 2 pts each) |
+| Group Assignment   | 20      | Graded by admin                                  |
+| **Total**          | **100** | Max possible score                               |
 
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Next.js 16** - React framework with App Router
 - **React 19** - UI components and hooks
 - **Tailwind CSS 4** - Styling
@@ -46,65 +50,73 @@ A comprehensive **Learning Management System (LMS)** built for aviation safety t
 - **Lucide React** - Icon library
 
 ### Backend
+
 - **Next.js API Routes** - Node.js backend
 - **MongoDB** - Document database
 - **Mongoose** - ODM for MongoDB
 - **JWT (jose)** - Token authentication
 
 ### Additional Services
+
 - **Supabase Storage** - File uploads for group assignments
 - **bcryptjs** - Password hashing
 
 ## 📦 Installation
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - MongoDB instance
 - Supabase project (for file storage)
 
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/clifforddonk/airforce-quiz-system.git
    cd airforce-quiz-system
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Configure environment variables**
-   
+
    Create a `.env.local` file:
+
    ```env
    # Database
    MONGO_URL=mongodb+srv://username:password@cluster.mongodb.net/airforce-quiz
-   
+
    # Authentication
    JWT_SECRET=your-super-secret-key-min-32-chars
-   
+
    # Supabase (File Storage)
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-   
+
    # Environment
    NODE_ENV=development
    ```
 
 4. **Run development server**
+
    ```bash
    npm run dev
    ```
-   
+
    Open [http://localhost:3000](http://localhost:3000)
 
 5. **Initialize groups** (Admin only)
+
    ```bash
    # Option 1: Call the API endpoint
    POST /api/admin/groups/initialize
-   
+
    # Option 2: Run the script directly
    npx ts-node app/scripts/initializeGroups.ts
    ```
@@ -159,27 +171,30 @@ airforce-quiz-system/
 ## 🔐 User Roles & Access
 
 ### Student Role
-| Feature | Access |
-|---------|--------|
-| View Dashboard | ✅ |
-| Take Quizzes | ✅ |
-| View Scores | ✅ |
-| Review Answers | ✅ |
-| Submit Group Assignment | ✅ |
-| Access Admin | ❌ |
+
+| Feature                 | Access |
+| ----------------------- | ------ |
+| View Dashboard          | ✅     |
+| Take Quizzes            | ✅     |
+| View Scores             | ✅     |
+| Review Answers          | ✅     |
+| Submit Group Assignment | ✅     |
+| Access Admin            | ❌     |
 
 ### Admin Role
-| Feature | Access |
-|---------|--------|
-| View Dashboard | ✅ |
-| Manage Questions | ✅ |
-| View Student Results | ✅ |
-| Grade Group Submissions | ✅ |
-| Access Student Dashboard | ❌ |
+
+| Feature                  | Access |
+| ------------------------ | ------ |
+| View Dashboard           | ✅     |
+| Manage Questions         | ✅     |
+| View Student Results     | ✅     |
+| Grade Group Submissions  | ✅     |
+| Access Student Dashboard | ❌     |
 
 ## 🚀 API Endpoints
 
 ### Authentication
+
 ```
 POST   /api/auth/signup          # Register new user
 POST   /api/auth/login           # Login user
@@ -188,6 +203,7 @@ GET    /api/auth/me              # Get current user
 ```
 
 ### Questions (Admin)
+
 ```
 GET    /api/questions?category=topic1   # Get questions by topic
 POST   /api/questions                    # Create question
@@ -198,6 +214,7 @@ POST   /api/questions/bulk               # Bulk import questions
 ```
 
 ### Submissions (Student)
+
 ```
 POST   /api/submissions                  # Submit quiz
 GET    /api/submissions                  # Get my submissions
@@ -207,6 +224,7 @@ GET    /api/submissions/review           # Review quiz with answers
 ```
 
 ### Admin
+
 ```
 GET    /api/admin/submissions            # Get all student results
 GET    /api/admin/submissions/groups     # Get group submissions
@@ -220,17 +238,20 @@ GET    /api/admin/stats                  # Get system statistics
 ### For Students
 
 1. **Sign Up**
+
    - Navigate to `/auth/signup`
    - Enter name, email, password, and select group
    - Account is created and you're ready to quiz!
 
 2. **Take a Quiz**
+
    - Go to `/dashboard`
    - Click on a quiz topic card
    - Answer 10 questions in 10 minutes
    - Submit to see your score
 
 3. **Review Results**
+
    - Go to `/dashboard/scores` to see all quiz scores
    - Click "Review" to see detailed answer explanations
    - Compare your answers with correct answers
@@ -244,12 +265,14 @@ GET    /api/admin/stats                  # Get system statistics
 ### For Admins
 
 1. **Create Questions**
+
    - Navigate to `/admin/questions`
    - Select topic
    - Fill in question, 4 options, and correct answer
    - Save
 
 2. **View Results**
+
    - Go to `/admin/results`
    - See all students' scores by topic
    - Filter by group or export to CSV
@@ -263,6 +286,7 @@ GET    /api/admin/stats                  # Get system statistics
 ## 🔧 Configuration
 
 ### Topics Configuration
+
 Edit `lib/topicsConfig.ts` to add/modify quiz topics:
 
 ```typescript
@@ -274,6 +298,7 @@ export const TOPICS = [
 ```
 
 ### Scoring System
+
 Modify scoring in `lib/topicsConfig.ts`:
 
 ```typescript
@@ -291,12 +316,13 @@ export const QUIZ_CONFIG = {
 ### Deploy to Vercel
 
 1. **Push to GitHub**
+
    ```bash
    git push origin main
    ```
 
 2. **Connect to Vercel**
-   - Go to [vercel.com](https://vercel.com)
+
    - Import your GitHub repository
    - Add environment variables
    - Deploy!
@@ -311,6 +337,7 @@ export const QUIZ_CONFIG = {
    ```
 
 ### Deploy to Other Platforms
+
 - **Netlify**: Not recommended (requires serverless functions)
 - **Railway**: Supports Node.js and MongoDB
 - **Render**: Full-stack deployment
@@ -319,20 +346,24 @@ export const QUIZ_CONFIG = {
 ## 🐛 Troubleshooting
 
 ### "Group not found" Error
+
 - Run `/api/admin/groups/initialize` to create missing groups
 - Or the system now auto-creates groups on first submission
 
 ### Quiz Timer Issues
+
 - Clear browser cache
 - Ensure browser system time is correct
 - Timer runs for 10 minutes (600 seconds)
 
 ### File Upload Fails
+
 - Check Supabase credentials are correct
 - Ensure file is PDF and under 10MB
 - Check browser has network connection
 
 ### Authentication Issues
+
 - Verify JWT_SECRET is set correctly
 - Check MongoDB connection string
 - Clear cookies and login again
@@ -365,8 +396,9 @@ Contributions are welcome! Please:
 ## 📧 Support
 
 For issues and questions:
+
 - Open a GitHub issue
-- Contact: [your-email@example.com]
+- Contact: [clifforddonk@gmail.com]
 - Documentation: Check `DOCUMENTATION_INDEX.md` in repo
 
 ## 🙏 Acknowledgments
@@ -378,4 +410,4 @@ For issues and questions:
 
 ---
 
-**Made with ❤️ by Clifford Donk**
+**Made with ❤️ by Clifford Donkor**

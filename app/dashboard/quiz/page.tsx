@@ -53,6 +53,7 @@ export default function SecureQuizPage() {
   const [submitting, setSubmitting] = useState(false);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [showTabWarning, setShowTabWarning] = useState(false);
+  const [tabWarningMessage, setTabWarningMessage] = useState("");
   const [quizLocked, setQuizLocked] = useState(false);
   const [lockMessage, setLockMessage] = useState("");
 
@@ -245,30 +246,52 @@ export default function SecureQuizPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, quizCompleted, selectedTopic]);
 
-  // ✅ NEW: Tab visibility detection with violation reporting
+  // ✅ NEW: Tab visibility detection with violation reporting & warnings
   useEffect(() => {
     if (!quizCompleted && selectedTopic && sessionToken) {
       const handleVisibilityChange = () => {
         if (document.hidden) {
-          setTabSwitchCount((prev: number) => prev + 1);
-          setShowTabWarning(true);
+          setTabSwitchCount((prev: number) => {
+            const newCount = prev + 1;
 
-          // ✅ Report violation to backend
-          const timeIntoQuiz = Math.floor(
-            (Date.now() - startTimeRef.current) / 1000
-          );
-          fetch("/api/quiz/violations", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sessionToken,
-              violationType: "tab_switch",
-              count: 1,
-              timeIntoQuiz,
-            }),
-          }).catch((err) => console.error("Failed to report violation:", err));
+            // Determine warning message based on count
+            let message = "";
+            if (newCount === 1) {
+              message = "⚠️ Warning 1: Switching tabs is not allowed. This is your first warning.";
+            } else if (newCount === 2) {
+              message = "⚠️ Warning 2: One more tab switch will automatically submit your quiz!";
+            } else if (newCount >= 3) {
+              message = "❌ Maximum violations reached. Your quiz will be submitted now.";
+              // Auto-submit on 3rd violation
+              setTimeout(() => {
+                handleSubmit();
+              }, 500);
+            }
 
-          setTimeout(() => setShowTabWarning(false), 3000);
+            setTabWarningMessage(message);
+            setShowTabWarning(true);
+
+            // ✅ Report violation to backend
+            const timeIntoQuiz = Math.floor(
+              (Date.now() - startTimeRef.current) / 1000
+            );
+            fetch("/api/quiz/violations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sessionToken,
+                violationType: "tab_switch",
+                count: newCount,
+                timeIntoQuiz,
+              }),
+            }).catch((err) => console.error("Failed to report violation:", err));
+
+            // Hide warning after 5 seconds (or longer for auto-submit warning)
+            const duration = newCount === 2 ? 8000 : 5000;
+            setTimeout(() => setShowTabWarning(false), duration);
+
+            return newCount;
+          });
         }
       };
 
@@ -501,11 +524,41 @@ export default function SecureQuizPage() {
       <div className="max-w-2xl mx-auto">
         {/* Tab Warning */}
         {showTabWarning && (
-          <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-orange-600" />
-            <p className="text-orange-800 text-sm">
-              Tab switch detected (Count: {tabSwitchCount})
-            </p>
+          <div className={`mb-4 rounded-lg p-4 flex items-start gap-3 border-l-4 animate-pulse ${
+            tabSwitchCount >= 3
+              ? "bg-red-50 border-red-400"
+              : tabSwitchCount === 2
+              ? "bg-yellow-50 border-yellow-400"
+              : "bg-orange-50 border-orange-400"
+          }`}>
+            <AlertCircle className={`w-6 h-6 flex-shrink-0 mt-0.5 ${
+              tabSwitchCount >= 3
+                ? "text-red-600"
+                : tabSwitchCount === 2
+                ? "text-yellow-600"
+                : "text-orange-600"
+            }`} />
+            <div className="flex-1">
+              <p className={`font-semibold ${
+                tabSwitchCount >= 3
+                  ? "text-red-900"
+                  : tabSwitchCount === 2
+                  ? "text-yellow-900"
+                  : "text-orange-900"
+              }`}>
+                {tabWarningMessage}
+              </p>
+              {tabSwitchCount === 1 && (
+                <p className="text-sm text-orange-700 mt-1">
+                  Switching tabs during quiz is prohibited. You have 2 more violations before auto-submission.
+                </p>
+              )}
+              {tabSwitchCount === 2 && (
+                <p className="text-sm text-yellow-700 mt-1">
+                  🚨 One more tab switch will trigger automatic quiz submission with all current answers!
+                </p>
+              )}
+            </div>
           </div>
         )}
 
