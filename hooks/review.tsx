@@ -250,7 +250,7 @@ export default function SecureQuizPage() {
     if (!quizCompleted && selectedTopic && sessionToken) {
       const handleVisibilityChange = () => {
         if (document.hidden) {
-          setTabSwitchCount((prev) => prev + 1);
+          setTabSwitchCount((prev: number) => prev + 1);
           setShowTabWarning(true);
 
           // ✅ Report violation to backend
@@ -315,7 +315,10 @@ export default function SecureQuizPage() {
   }, [quizCompleted, selectedTopic]);
 
   const handleSelect = (questionId: string, selectedIndex: number) => {
-    setUserAnswers((prev) => ({ ...prev, [questionId]: selectedIndex }));
+    setUserAnswers((prev: { [key: string]: number }) => ({
+      ...prev,
+      [questionId]: selectedIndex,
+    }));
   };
 
   const handleNext = () => {
@@ -540,7 +543,7 @@ export default function SecureQuizPage() {
 
           {/* Options */}
           <div className="space-y-3">
-            {question.options.map((option, i) => (
+            {question.options.map((option: string, i: number) => (
               <button
                 key={i}
                 onClick={() => handleSelect(question._id, i)}

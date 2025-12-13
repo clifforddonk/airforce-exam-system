@@ -40,12 +40,22 @@ export async function POST(request: NextRequest) {
     const groupNumber = currentUser.group;
 
     // 3️⃣ Find the Group document (IMPORTANT!)
-    const group = await Group.findOne({ groupNumber });
+    let group = await Group.findOne({ groupNumber });
+
+    // Auto-create group if it doesn't exist (for newly assigned students)
     if (!group) {
-      return NextResponse.json(
-        { message: "Group not found. Please contact admin." },
-        { status: 404 }
-      );
+      const groupStudents = await User.find({
+        group: groupNumber,
+        role: "student",
+      });
+
+      group = await Group.create({
+        groupNumber,
+        students: groupStudents.map((s) => s._id),
+        locked: false,
+      });
+
+      console.log(`✅ Auto-created Group ${groupNumber}`);
     }
 
     // 4️⃣ Check if group already submitted (using locked status)

@@ -144,7 +144,7 @@ export default function StudentResultsPage() {
       "Total",
     ];
 
-    const rows = results.map((result) => [
+    const rows = results.map((result: any) => [
       `"${result.fullName}"`,
       result.email,
       result.group || "-",
@@ -157,7 +157,7 @@ export default function StudentResultsPage() {
 
     const csvContent = [
       headers.join(","),
-      ...rows.map((row) => row.join(",")),
+      ...rows.map((row: any) => row.join(",")),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -204,7 +204,6 @@ export default function StudentResultsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
               Admin Dashboard

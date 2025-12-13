@@ -25,11 +25,13 @@ export default function SignupPage() {
     setShowPassword(!showPassword);
   };
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSignup = async (e) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -44,6 +46,7 @@ export default function SignupPage() {
         fullName: formData.name,
         email: formData.email,
         password: formData.password,
+        group: 1,
       };
       await signup.mutateAsync(signupData);
       setMessage("Account created successfully! Redirecting...");
@@ -53,7 +56,7 @@ export default function SignupPage() {
         router.push("/auth/login");
       }, 500);
     } catch (err) {
-      setError(err.message || "Signup failed. Please try again.");
+      setError((err as Error)?.message || "Signup failed. Please try again.");
     }
   };
 
@@ -109,7 +112,7 @@ export default function SignupPage() {
             </div>
           )}
 
-          <div className="space-y-5">
+          <form onSubmit={handleSignup} className="space-y-5">
             <div>
               <label
                 htmlFor="name"
@@ -194,7 +197,7 @@ export default function SignupPage() {
             </div>
 
             <button
-              onClick={handleSignup}
+              type="submit"
               disabled={signup.isPending}
               className="w-full flex justify-center items-center py-3 px-4 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
@@ -226,7 +229,7 @@ export default function SignupPage() {
                 "Create Account"
               )}
             </button>
-          </div>
+          </form>
 
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-center text-sm text-gray-600">

@@ -393,7 +393,7 @@ export default function AdminQuestionsPage() {
             </div>
 
             <div className="space-y-3">
-              {localQuestions.map((q, index) => (
+              {localQuestions.map((q: any, index: number) => (
                 <div
                   key={index}
                   className="bg-white p-4 rounded-lg border border-yellow-300"
@@ -404,7 +404,7 @@ export default function AdminQuestionsPage() {
                         {index + 1}. {q.question}
                       </p>
                       <div className="space-y-1">
-                        {q.options.map((opt, i) => (
+                        {q.options.map((opt: string, i: number) => (
                           <p
                             key={i}
                             className={`text-sm ${

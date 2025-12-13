@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Upload,
   FileText,
@@ -15,6 +16,7 @@ import Link from "next/link";
 export default function GroupAssignmentPage() {
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -94,6 +96,9 @@ export default function GroupAssignmentPage() {
         "Assignment uploaded successfully! Your group submission has been recorded."
       );
       setFile(null);
+
+      // ✅ Invalidate group submissions cache so dashboard shows updated status immediately
+      queryClient.invalidateQueries({ queryKey: ["group-submissions"] });
 
       // Reset file input
       const fileInput = document.getElementById(

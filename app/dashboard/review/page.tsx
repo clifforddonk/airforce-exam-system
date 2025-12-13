@@ -132,7 +132,7 @@ export default function ReviewPage() {
 
         {/* Questions */}
         <div className="space-y-6">
-          {reviewData.questions.map((question, idx) => {
+          {reviewData.questions.map((question: any, idx: number) => {
             const userAnswerIndex = reviewData.answers[question._id];
             const isCorrect = userAnswerIndex === question.correctAnswer;
 
@@ -172,7 +172,7 @@ export default function ReviewPage() {
 
                 {/* Options */}
                 <div className="space-y-3">
-                  {question.options.map((option, optIdx) => {
+                  {question.options.map((option: string, optIdx: number) => {
                     const isUserSelectedThisOption = userAnswerIndex === optIdx;
                     const isCorrectOption = question.correctAnswer === optIdx;
 

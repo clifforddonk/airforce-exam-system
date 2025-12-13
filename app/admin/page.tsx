@@ -67,7 +67,9 @@ export default function AdminDashboard() {
   });
 
   // ✅ Fetch student submissions with React Query caching
-  const { data: studentData, isLoading: studentLoading } = useQuery<StudentResult[]>({
+  const { data: studentData, isLoading: studentLoading } = useQuery<
+    StudentResult[]
+  >({
     queryKey: ["admin-submissions"],
     queryFn: async () => {
       const response = await fetch("/api/admin/submissions");
@@ -81,11 +83,29 @@ export default function AdminDashboard() {
   });
 
   // ✅ Fetch group submissions with React Query caching
-  const { data: groupData, isLoading: groupLoading } = useQuery<GroupSubmissionsResponse>({
-    queryKey: ["admin-group-submissions"],
+  const { data: groupData, isLoading: groupLoading } =
+    useQuery<GroupSubmissionsResponse>({
+      queryKey: ["admin-group-submissions"],
+      queryFn: async () => {
+        const response = await fetch("/api/admin/submissions/groups");
+        if (!response.ok) throw new Error("Failed to fetch group submissions");
+        return response.json();
+      },
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: true,
+    });
+
+  // ✅ Fetch admin stats (total students and groups)
+  const { data: statsData, isLoading: statsLoading } = useQuery<{
+    totalStudents: number;
+    totalGroups: number;
+  }>({
+    queryKey: ["admin-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/submissions/groups");
-      if (!response.ok) throw new Error("Failed to fetch group submissions");
+      const response = await fetch("/api/admin/stats");
+      if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json();
     },
     staleTime: 10 * 60 * 1000,
@@ -96,12 +116,10 @@ export default function AdminDashboard() {
 
   // ✅ Calculate metrics when data is available
   useEffect(() => {
-    if (!studentLoading && !groupLoading && studentData && groupData) {
+    if (!studentLoading && !groupLoading && !statsLoading && studentData && groupData && statsData) {
       try {
-        const uniqueStudents = studentData.length;
-        const uniqueGroups = new Set(
-          (groupData.submissions || []).map((sub) => sub.groupNumber)
-        ).size;
+        const uniqueStudents = statsData.totalStudents; // Use actual student count from API
+        const uniqueGroups = statsData.totalGroups; // Use actual group count from API
 
         // ✅ Collect student scores
         const allScores: number[] = studentData
@@ -207,9 +225,9 @@ export default function AdminDashboard() {
         console.error("Error calculating metrics:", err);
       }
     }
-  }, [studentLoading, groupLoading, studentData, groupData]);
+  }, [studentLoading, groupLoading, statsLoading, studentData, groupData, statsData]);
 
-  if (userLoading || studentLoading || groupLoading) {
+  if (userLoading || studentLoading || groupLoading || statsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -270,7 +288,7 @@ export default function AdminDashboard() {
             Score Distribution
           </h2>
           <div className="space-y-4">
-            {scoreDistribution.map((dist, idx) => (
+            {scoreDistribution.map((dist: any, idx: number) => (
               <div key={idx}>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-gray-700">

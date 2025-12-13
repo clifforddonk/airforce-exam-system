@@ -105,7 +105,7 @@ export default function AdminGradingPage() {
       {
         onSuccess: () => {
           // Clear editing state
-          setEditingScores((prev) => {
+          setEditingScores((prev: any) => {
             const next = { ...prev };
             delete next[submission.id];
             return next;
@@ -307,7 +307,7 @@ export default function AdminGradingPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredSubmissions.map((submission) => {
+                  filteredSubmissions.map((submission: any) => {
                     const currentScore =
                       editingScores[submission.id] ??
                       submission.score?.toString() ??
@@ -335,7 +335,7 @@ export default function AdminGradingPage() {
                             max="100"
                             value={currentScore}
                             onChange={(e) =>
-                              setEditingScores((prev) => ({
+                              setEditingScores((prev: any) => ({
                                 ...prev,
                                 [submission.id]: e.target.value,
                               }))
