@@ -50,9 +50,7 @@ export default function LandingPage() {
                 height={40}
                 className="drop-shadow-md"
               />
-              <span className="text-xl font-bold text-[#0f172a]">
-                Airforce Training System
-              </span>
+              <span className="text-xl font-bold text-[#0f172a]">SKYGUARD</span>
             </div>
 
             {/* Auth Buttons */}
@@ -71,17 +69,17 @@ export default function LandingPage() {
       <div className="relative pt-16">
         <div className="absolute inset-0">
           <Image
-            src="/airplane.jpg"
+            src="/drop1.jpg"
             alt="Airforce Aircraft"
             fill
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gray-900 opacity-70"></div>
+          <div className="absolute inset-0 bg-gray-900 opacity-10"></div>
         </div>
         <div className="relative max-w-7xl mx-auto px-4 py-32 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Airforce Training Quiz System
+            <p> SKYGUARD </p>No. 4 Strike and Recce Wing Safety Awareness Kit
           </h1>
           <p className="mt-6 text-xl text-white max-w-3xl mx-auto leading-relaxed">
             Complete your training modules, test your knowledge, and track your

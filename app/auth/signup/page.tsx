@@ -66,14 +66,14 @@ export default function SignupPage() {
       <div className="relative w-full lg:w-1/2 hidden lg:flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/airplane.jpg"
+            src="/drop1.jpg"
             alt="Airforce Aircraft"
             fill
             className="object-cover"
             priority
           />
           {/* Dark overlay to make image darker */}
-          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="absolute inset-0 bg-black opacity-15"></div>
         </div>
       </div>
 
@@ -94,9 +94,7 @@ export default function SignupPage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
               Create Account
             </h2>
-            <p className="text-sm lg:text-base text-gray-600">
-              Join the Airforce Training System
-            </p>
+            <p className="text-sm lg:text-base text-gray-600">Join SKYGUARD</p>
           </div>
 
           {message && (

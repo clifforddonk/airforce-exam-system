@@ -62,14 +62,14 @@ export default function LoginPage() {
       <div className="relative w-full lg:w-1/2 hidden lg:flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/airplane.jpg"
+            src="/drop2.jpg"
             alt="Airforce Aircraft"
             fill
             className="object-cover"
             priority
           />
           {/* Dark overlay to make image darker */}
-          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="absolute inset-0 bg-black opacity-15"></div>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
               Log Into Your Account
             </h2>
             <p className="text-sm lg:text-base text-gray-600">
-              Welcome back to Airforce Training
+              Welcome back to SKYGUARD
             </p>
           </div>
 
@@ -205,14 +205,14 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
+          {/* 
           <div className="mt-6 text-center">
             <Link href="/forgot-password">
               <p className="text-sm text-blue-600 hover:underline cursor-pointer">
                 Forgot your password?
               </p>
             </Link>
-          </div>
+          </div> */}
 
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-center text-sm text-gray-600">
