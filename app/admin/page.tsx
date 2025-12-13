@@ -116,7 +116,14 @@ export default function AdminDashboard() {
 
   // ✅ Calculate metrics when data is available
   useEffect(() => {
-    if (!studentLoading && !groupLoading && !statsLoading && studentData && groupData && statsData) {
+    if (
+      !studentLoading &&
+      !groupLoading &&
+      !statsLoading &&
+      studentData &&
+      groupData &&
+      statsData
+    ) {
       try {
         const uniqueStudents = statsData.totalStudents; // Use actual student count from API
         const uniqueGroups = statsData.totalGroups; // Use actual group count from API
@@ -225,7 +232,14 @@ export default function AdminDashboard() {
         console.error("Error calculating metrics:", err);
       }
     }
-  }, [studentLoading, groupLoading, statsLoading, studentData, groupData, statsData]);
+  }, [
+    studentLoading,
+    groupLoading,
+    statsLoading,
+    studentData,
+    groupData,
+    statsData,
+  ]);
 
   if (userLoading || studentLoading || groupLoading || statsLoading) {
     return (
