@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-01-13
 
 ### Added
+
 - Initial release of Airforce Quiz System
 - Student dashboard with quiz overview
 - Interactive quiz interface with timer
@@ -29,7 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Professional documentation
 
 ### Features
+
 - **Quiz System**
+
   - Timed quizzes (10 minutes)
   - Multiple choice questions
   - Server-side scoring
@@ -37,12 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Progress tracking
 
 - **Group Assignments**
+
   - PDF file uploads
   - Group-based collaboration
   - Admin grading interface
   - Feedback system
 
 - **Admin Tools**
+
   - Question CRUD operations
   - Student results export
   - Group management
@@ -57,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Server-side validation
 
 ### Fixed
+
 - TypeScript compilation errors
 - React 19 hook imports
 - Implicit any types
@@ -64,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache invalidation timing
 
 ### Technical Improvements
+
 - Upgraded to React 19
 - Next.js 16 with App Router
 - Tailwind CSS 4
@@ -73,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Planned Features
 
 ### [0.2.0] - Next Release
+
 - [ ] Email notifications
 - [ ] Real-time WebSocket updates
 - [ ] Advanced analytics dashboard
@@ -83,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Mobile-optimized interface
 
 ### [0.3.0] - Future Releases
+
 - [ ] Video tutorials for quizzes
 - [ ] Audio question format
 - [ ] Adaptive difficulty

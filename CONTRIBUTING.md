@@ -5,12 +5,14 @@ Thank you for your interest in contributing! This document provides guidelines a
 ## Getting Started
 
 1. **Fork the repository**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/airforce-quiz-system.git
    cd airforce-quiz-system
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -23,17 +25,21 @@ Thank you for your interest in contributing! This document provides guidelines a
 ## Development Workflow
 
 ### Running Development Server
+
 ```bash
 npm run dev
 ```
+
 Visit [http://localhost:3000](http://localhost:3000)
 
 ### Type Checking
+
 ```bash
 npx tsc --noEmit
 ```
 
 ### Building for Production
+
 ```bash
 npm run build
 ```
@@ -41,17 +47,20 @@ npm run build
 ## Code Guidelines
 
 ### TypeScript
+
 - Use TypeScript for all new code
 - Avoid `any` types - use proper type annotations
 - Run `npx tsc --noEmit` to check types
 
 ### React Components
+
 - Use functional components with hooks
 - Add `"use client"` directive for client components
 - Prefer named exports for components
 - Use proper prop types
 
 Example:
+
 ```typescript
 "use client";
 
@@ -68,11 +77,13 @@ export default function MyComponent({ title, onClick }: MyComponentProps) {
 ```
 
 ### API Routes
+
 - Validate input with proper error responses
 - Use HTTP status codes correctly (200, 201, 400, 403, 404, 500)
 - Add meaningful error messages
 
 Example:
+
 ```typescript
 export async function POST(request: NextRequest) {
   try {
@@ -80,10 +91,7 @@ export async function POST(request: NextRequest) {
 
     // Validate
     if (!data.title) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
     // Process
@@ -101,11 +109,13 @@ export async function POST(request: NextRequest) {
 ```
 
 ### Styling
+
 - Use Tailwind CSS classes
 - Avoid inline styles
 - Follow the existing color scheme
 
 ### Comments & Documentation
+
 - Add comments for complex logic
 - Document public functions
 - Keep README.md updated
@@ -126,17 +136,20 @@ test: Add unit tests for scoring
 ## Pull Request Process
 
 1. **Update your branch**
+
    ```bash
    git pull origin main
    ```
 
 2. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: your feature description"
    ```
 
 3. **Push to your fork**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -152,37 +165,45 @@ test: Add unit tests for scoring
 **Title**: `[Type] Brief description`
 
 **Description**:
+
 ```markdown
 ## Changes
+
 - Brief description of changes
 
 ## Related Issues
+
 Closes #123
 
 ## Testing
+
 - [ ] Tested locally
 - [ ] No TypeScript errors
 - [ ] No console errors
 
 ## Screenshots (if applicable)
+
 [Add before/after screenshots]
 ```
 
 ## Areas for Contribution
 
 ### High Priority
+
 - [ ] Mobile responsiveness improvements
 - [ ] Performance optimizations
 - [ ] Bug fixes
 - [ ] Documentation improvements
 
 ### Medium Priority
+
 - [ ] New features (please discuss first)
 - [ ] Tests
 - [ ] Code refactoring
 - [ ] UI/UX improvements
 
 ### Low Priority
+
 - [ ] Comments and documentation
 - [ ] Code style improvements
 - [ ] Build optimizations
