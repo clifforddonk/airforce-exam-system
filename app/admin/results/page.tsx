@@ -254,16 +254,16 @@ export default function StudentResultsPage() {
                     Group
                   </th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-700">
-                    Topic 1
+                    Quiz 1
                   </th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-700">
-                    Topic 2
+                    Quiz 2
                   </th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-700">
-                    Topic 3
+                    Quiz 3
                   </th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-700">
-                    Topic 4
+                    Quiz 4
                   </th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-700">
                     Group Score
