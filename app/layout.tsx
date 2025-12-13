@@ -9,11 +9,15 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "AirForce Quiz App",
+  title: "Quiz App",
   description: "An Online Quiz System",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body className={`${nunito.className} antialiased`}>
