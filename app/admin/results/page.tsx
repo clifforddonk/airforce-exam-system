@@ -137,9 +137,10 @@ export default function StudentResultsPage() {
       "Student Name",
       "Email",
       "Group",
-      "Topic 1",
-      "Topic 2",
-      "Topic 3",
+      "Quiz 1",
+      "Quiz 2",
+      "Quiz 3",
+      "Quiz 4",
       "Group Score",
       "Total",
     ];
@@ -151,6 +152,7 @@ export default function StudentResultsPage() {
       result.topic1 !== undefined ? result.topic1 : "-",
       result.topic2 !== undefined ? result.topic2 : "-",
       result.topic3 !== undefined ? result.topic3 : "-",
+      result.topic4 !== undefined ? result.topic4 : "-",
       result.groupScore !== undefined ? result.groupScore : "-",
       result.total,
     ]);
