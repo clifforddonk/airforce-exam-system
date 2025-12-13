@@ -60,6 +60,7 @@ export default function SecureQuizPage() {
   // ✅ NEW: Session token for backend validation
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const startTimeRef = useRef<number>(0);
+  const hasSubmittedRef = useRef<boolean>(false);
 
   // ✅ NEW: Check completion status from backend (not localStorage)
   useEffect(() => {
@@ -291,8 +292,9 @@ export default function SecureQuizPage() {
               console.error("Failed to report violation:", err)
             );
 
-            // Hide warning after 5 seconds (or longer for auto-submit warning)
-            const duration = newCount === 2 ? 8000 : 5000;
+            // Hide warning after extended time (longer for auto-submit warning)
+            const duration =
+              newCount === 2 ? 12000 : newCount === 1 ? 8000 : 10000;
             setTimeout(() => setShowTabWarning(false), duration);
 
             return newCount;
@@ -366,7 +368,9 @@ export default function SecureQuizPage() {
     questionsData?: Question[],
     answersData?: { [key: string]: number }
   ) => {
-    if (!selectedTopic) return;
+    // ✅ PREVENT DOUBLE SUBMISSION
+    if (hasSubmittedRef.current || !selectedTopic) return;
+    hasSubmittedRef.current = true;
 
     const quizAnswers = answersData || userAnswers;
 
