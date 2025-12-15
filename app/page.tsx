@@ -82,9 +82,8 @@ export default function LandingPage() {
             <p> SKYGUARD </p>No. 4 Strike and Recce Wing Safety Awareness Kit
           </h1>
           <p className="mt-6 text-xl text-white max-w-3xl mx-auto leading-relaxed">
-            Complete your training modules, test your knowledge, and track your
-            progress through our comprehensive quiz system designed for Airforce
-            personnel.
+            Through our comprehensive safety awareness system designed for Ghana Air Force personnel to 
+            complete training modules, test knowledge, and track progress.
           </p>
           <div className="mt-10 flex justify-center space-x-6">
             <Link href="/auth/signup">
@@ -141,7 +140,7 @@ export default function LandingPage() {
                 </div>
                 <Link href="/auth/login">
                   <button className="w-full mt-6 bg-[#0f172a] hover:bg-gray-900 rounded-lg py-3 text-white font-medium transition-colors shadow-md">
-                    Start Quiz
+                    Progress Pulse
                   </button>
                 </Link>
               </div>
@@ -206,7 +205,7 @@ export default function LandingPage() {
       <footer className="border-t border-gray-700 bg-[#0f172a] py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-400 text-sm">
-            &copy; 2024 Airforce Training System. All rights reserved.
+            &copy; 2025 Airforce Training System. All rights reserved.
           </p>
         </div>
       </footer>

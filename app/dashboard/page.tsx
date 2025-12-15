@@ -197,7 +197,7 @@ export default function StudentDashboard() {
                             </p>
                             <Link href={`/dashboard/quiz?topic=${topic.id}`}>
                               <button className="w-full bg-[#0f172a] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#1e293b] transition-colors">
-                                Start Quiz
+                                Progress Pulse
                               </button>
                             </Link>
                           </>
