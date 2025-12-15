@@ -134,6 +134,7 @@ export default function StudentResultsPage() {
 
   const downloadCSV = () => {
     const headers = [
+      "S/N",
       "Student Name",
       "Email",
       "Group",
@@ -145,7 +146,8 @@ export default function StudentResultsPage() {
       "Total",
     ];
 
-    const rows = results.map((result: any) => [
+    const rows = results.map((result: any, index: number) => [
+      index + 1,
       `"${result.fullName}"`,
       result.email,
       result.group || "-",
@@ -247,6 +249,9 @@ export default function StudentResultsPage() {
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="text-left py-4 px-6 font-semibold text-gray-700">
+                    #
+                  </th>
+                  <th className="text-left py-4 px-6 font-semibold text-gray-700">
                     Student Name
                   </th>
                   <th className="text-left py-4 px-6 font-semibold text-gray-700">
@@ -276,11 +281,14 @@ export default function StudentResultsPage() {
                 </tr>
               </thead>
               <tbody>
-                {results.map((result) => (
+                {results.map((result, index) => (
                   <tr
                     key={result.userId}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                   >
+                    <td className="py-4 px-6 text-gray-700 font-medium">
+                      {index + 1}
+                    </td>
                     <td className="py-4 px-6 text-gray-800 font-medium">
                       {result.fullName}
                     </td>
