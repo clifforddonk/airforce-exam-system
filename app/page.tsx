@@ -83,8 +83,8 @@ export default function LandingPage() {
           </h1>
           <p className="mt-6 text-xl text-white max-w-3xl mx-auto leading-relaxed">
             Complete your training modules, test your knowledge, and track your
-            progress through our comprehensive quiz system designed for Airforce
-            personnel.
+            progress through our comprehensive safety system designed for Ghana
+            Airforce personnel.
           </p>
           <div className="mt-10 flex justify-center space-x-6">
             <Link href="/auth/signup">
@@ -206,7 +206,7 @@ export default function LandingPage() {
       <footer className="border-t border-gray-700 bg-[#0f172a] py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-400 text-sm">
-            &copy; 2024 Airforce Training System. All rights reserved.
+            &copy; 2024 Skyguard. All rights reserved.
           </p>
         </div>
       </footer>
