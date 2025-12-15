@@ -85,8 +85,7 @@ export default function LandingPage() {
           </h1>
           <p className="mt-6 text-xl text-white max-w-3xl mx-auto leading-relaxed">
             Through our comprehensive safety awareness system designed for Ghana Air Force personnel to 
-            complete training modules, testinga knowledge, and tracking progress through our comprehensive
-            learning sprint.
+            complete training modules, test knowledge, and track progress.
           </p>
           <div className="mt-10 flex justify-center space-x-6">
             <Link href="/auth/signup">
