@@ -141,7 +141,7 @@ export default function LandingPage() {
                 </div>
                 <Link href="/auth/login">
                   <button className="w-full mt-6 bg-[#0f172a] hover:bg-gray-900 rounded-lg py-3 text-white font-medium transition-colors shadow-md">
-                    Start Quiz
+                    Progress Pulse
                   </button>
                 </Link>
               </div>
@@ -213,3 +213,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
