@@ -84,9 +84,9 @@ export default function LandingPage() {
             Airforce Training Quiz System
           </h1>
           <p className="mt-6 text-xl text-white max-w-3xl mx-auto leading-relaxed">
-            Complete your training modules, test your knowledge, and track your
-            progress through our comprehensive quiz system designed for Airforce
-            personnel.
+            Through our comprehensive safety awareness system designed for Ghana Air Force personnel to 
+            complete training modules, testinga knowledge, and tracking progress through our comprehensive
+            learning sprint.
           </p>
           <div className="mt-10 flex justify-center space-x-6">
             <Link href="/auth/signup">
